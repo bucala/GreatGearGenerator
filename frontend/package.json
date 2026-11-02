@@ -8,17 +8,22 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
     "build": "tsc -b && vite build",
     "test": "vitest run src",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "deploy:surge": "npm run build && surge ./dist greatgeargenerator-bucala.surge.sh"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
     "@react-three/fiber": "^9.0.0",
     "@tailwindcss/vite": "^4.0.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "replicad": "^1.2.0",
+    "replicad-opencascadejs": "^1.1.0",
     "tailwindcss": "^4.0.0",
     "three": "^0.180.0"
   },

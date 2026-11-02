@@ -30,17 +30,26 @@ export const defaults: Design = {
 };
 export type Gear = {
   teeth: number;
+  profile_shift: number;
   pitch_diameter: number;
   base_diameter: number;
   tip_diameter: number;
   root_diameter: number;
   bore: number;
+  base_half_angle: number;
+  t_start: number;
+  t_end: number;
+  min_teeth: number;
+  undercut: boolean;
+  tip_thickness: number;
   outline: [number, number][];
 };
 export type Analysis = {
   parameters: Design;
   gears: [Gear, Gear];
   center_distance: number;
+  reference_center_distance: number;
+  tip_shortening: number;
   ratio: number;
   working_pressure_angle: number;
   contact_ratio: number;

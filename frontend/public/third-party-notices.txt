@@ -1,0 +1,24 @@
+Great Gear Generator - browser CAD distribution
+
+replicad 1.2.0 (MIT), Steve Genoud
+https://github.com/sgenoud/replicad
+License: /licenses/replicad-MIT.txt
+
+replicad-opencascadejs 1.1.0 (LGPL-2.1-only), Steve Genoud
+OpenCascade.js / Open CASCADE Technology, compiled to WebAssembly.
+The WebAssembly module is distributed unmodified from the npm package.
+License: /licenses/opencascade-LGPL-2.1.txt
+Source and build configuration:
+https://github.com/sgenoud/replicad/tree/main/packages/replicad-opencascadejs
+https://github.com/donalffons/opencascade.js
+https://github.com/Open-Cascade-SAS/OCCT
+Package: https://www.npmjs.com/package/replicad-opencascadejs/v/1.1.0
+The separately loaded WASM module can be replaced and rebuilt using that toolchain.
+
+jsPDF 4.2.1 (MIT), James Hall and contributors
+https://github.com/parallax/jsPDF
+License: /licenses/jspdf-MIT.txt
+
+React, Three.js, React Three Fiber, Drei, Lucide and Tailwind CSS are used
+under their respective MIT licenses. Versions and package sources are in
+frontend/package-lock.json in https://gitlab.com/bucala/GreatGearGenerator.

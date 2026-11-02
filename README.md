@@ -1,8 +1,22 @@
 # Great Gear Generator
 
-Lokálna aplikácia na parametrický návrh vonkajších čelných evolventných súkolesí.
-React + TypeScript + Tailwind CSS + React Three Fiber, FastAPI + CadQuery/OpenCASCADE,
-PDF reporty cez ReportLab. Rozhranie je v slovenčine, PDF report v angličtine.
+Aplikácia na parametrický návrh vonkajších čelných evolventných súkolesí.
+React + TypeScript + Tailwind CSS + React Three Fiber. Prehliadačové výpočty,
+PDF cez jsPDF a návrhový STEP cez Replicad/OpenCascade WebAssembly.
+Voliteľný Python backend: FastAPI + CadQuery + ReportLab.
+Rozhranie je v slovenčine, PDF report v angličtine.
+
+**Online: https://greatgeargenerator-bucala.surge.sh**
+
+Predvolený frontend funguje úplne samostatne, bez Python servera. Postup nasadenia
+a prepínania režimov je v [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Čisto statické spustenie nevyžaduje Python:
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
 
 ## Spustenie vo Windows
 
@@ -47,11 +61,12 @@ Backend ponúka OpenAPI dokumentáciu na `/docs`.
 Požiadavka „CadQuery, evolventa bez akejkoľvek B-spline aproximácie a export STEP“
 nie je týmto implementovaným postupom splnená. CadQuery `parametricCurve` používa
 spline aproximáciu; výsledok preto neoznačujeme ako exaktnú výrobnú geometriu.
-Predvolené volanie STEP endpointu skončí 422. Návrhový export sa odomkne len
+Predvolené volanie serverového STEP endpointu skončí 422. Návrhový export sa odomkne len
 po explicitnom súhlase s aproximáciou v rozhraní / `allow_approximation: true` v API.
 
-Export interpoluje 65 analyticky vypočítaných bodov na každom boku zuba,
-hlavy a päty spája kružnicovými oblúkmi a používa radiálny prechod do päty.
+Serverový export interpoluje 65 analyticky vypočítaných bodov na každom boku zuba;
+prehliadačový export aproximuje B-spline cez 65 analytických vzoriek. Oba exporty
+spájajú hlavy a päty kružnicovými oblúkmi a používajú radiálny prechod do päty.
 Nemá certifikovanú globálnu hranicu geometrickej odchýlky. Výrobná trochoida,
 podrezaná päta, zaoblenie a vôľa nie sú modelované. STEP sa pri nevyhovujúcich
 geometrických kontrolách nevygeneruje. Náhľad používa vzorkovanú geometriu.
@@ -95,8 +110,8 @@ npm run test:e2e
 
 Testy overujú analytické identity, referenčné rozmery, korigovaný prípad KHK,
 neplatné vstupy, záťaže, PDF obsah, STEP round-trip cez OpenCASCADE a kompletný
-tok v skutočnom prehliadači. E2E automaticky spustí backend a používa zostavený
-frontend. Snímky a ukážky exportov vytvorí v ignorovanom adresári `output/`.
+tok v skutočnom prehliadači. E2E automaticky spustí statický server so zostaveným
+frontendom bez Python API. Snímky a exporty vytvorí v ignorovanom adresári `output/`.
 GitHub Actions spúšťa rovnaké kontroly na Linuxe.
 
 ## Štruktúra

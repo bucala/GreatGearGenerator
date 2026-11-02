@@ -1,4 +1,8 @@
 import type { Analysis, Design } from './types';
+import { calculate } from './geometry';
+
+// Static hosting needs no server. API mode remains available for local CadQuery workflows.
+export const browserRuntime = import.meta.env.VITE_RUNTIME !== 'api';
 
 export async function post(
   path: string,
@@ -27,15 +31,33 @@ export async function post(
 }
 
 export async function analyze(design: Design, signal: AbortSignal): Promise<Analysis> {
+  signal.throwIfAborted();
+  if (browserRuntime) return calculate(design);
   return (await post('analyze', design, signal)).json();
 }
 
-export async function download(path: string, design: Design, approximate: boolean) {
-  const response = await post(
-    `generate-${path}`,
-    path === 'step' ? { ...design, allow_approximation: approximate } : design,
-  );
-  const blob = await response.blob();
+export async function download(
+  path: 'step' | 'report',
+  design: Design,
+  approximate: boolean,
+  onProgress?: (value: string) => void,
+) {
+  let blob: Blob;
+  if (browserRuntime) {
+    if (path === 'step') {
+      const { generateStep } = await import('./browserCad');
+      blob = await generateStep(design, approximate, onProgress);
+    } else {
+      const { createReport } = await import('./browserReport');
+      blob = createReport(calculate(design));
+    }
+  } else {
+    const response = await post(
+      `generate-${path}`,
+      path === 'step' ? { ...design, allow_approximation: approximate } : design,
+    );
+    blob = await response.blob();
+  }
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

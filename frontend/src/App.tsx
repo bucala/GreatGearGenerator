@@ -18,7 +18,7 @@ import {
   Settings2,
   Sun,
 } from 'lucide-react';
-import { analyze, download } from './api';
+import { analyze, browserRuntime, download } from './api';
 import { defaults, type Analysis, type Design } from './types';
 import Sketch from './Sketch';
 
@@ -113,6 +113,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [exportError, setExportError] = useState('');
   const [busy, setBusy] = useState('');
+  const [exportProgress, setExportProgress] = useState('');
   const [mode, setMode] = useState<'3d' | '2d'>('3d');
   const [animate, setAnimate] = useState(false);
   const [approximate, setApproximate] = useState(false);
@@ -156,9 +157,10 @@ export default function App() {
   async function exportFile(kind: 'step' | 'report') {
     if (!fresh || busy || !design) return;
     setBusy(kind);
+    setExportProgress('');
     setExportError('');
     try {
-      await download(kind, design, approximate);
+      await download(kind, design, approximate, setExportProgress);
     } catch (e) {
       setExportError(e instanceof Error ? e.message : 'Export zlyhal.');
     } finally {
@@ -583,7 +585,7 @@ export default function App() {
               onClick={() => exportFile('step')}
             >
               <Box size={17} />
-              {busy === 'step' ? 'Generujem STEP…' : 'Stiahnuť STEP'}
+              {busy === 'step' ? exportProgress || 'Generujem STEP…' : 'Stiahnuť STEP'}
               <span>.stp</span>
             </button>
             <button
@@ -613,7 +615,8 @@ export default function App() {
         </span>
         <span>Čelné evolventné súkolesie · Predbežný inžiniersky návrh</span>
         <span className="local-label">
-          <span className="tiny-dot" /> Lokálny výpočet
+          <span className="tiny-dot" />{' '}
+          {browserRuntime ? 'Výpočet v prehliadači' : 'Lokálny výpočet'}
         </span>
       </footer>
     </div>

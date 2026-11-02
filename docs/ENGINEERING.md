@@ -81,6 +81,18 @@ interpolačného algoritmu, **nie certifikovaná maximálna odchýlka od evolven
 Neuvádzame neoverenú výrobnú presnosť. Exportuje sa jedno STEP s dvomi telesami,
 šírkou a otvormi. Koleso 2 je fázované o π−π/z₂ a posunuté o a.
 
+## Prehliadačový runtime na Surge
+
+Frontend používa tie isté rovnice a hranice vstupov v `frontend/src/geometry.ts`.
+Sedem referenčných prípadov generovaných Python jadrom kontroluje skalárne hodnoty,
+geometrické kontroly a vzorky oboch profilov. PDF vytvára jsPDF.
+STEP generuje samostatný worker s Replicad/OpenCascade.js: B-spline aproximácia
+65 analytických bodov na bok (`tolerance=1e-7` pre aproximátor), kružnicové oblúky,
+radiálna päta, otvory a dve telesá v pracovnej osovej vzdialenosti. Tolerancia
+aproximátora nie je certifikovaný globálny limit odchýlky evolventy. Exaktný STEP
+zostáva nepodporovaný. Pri každom exporte sa overí objem oboch telies; CI navyše
+spätne načíta stiahnutý súbor desktopovým OpenCascade jadrom a overí platnosť.
+
 ## Referencie
 
 - [KHK: Calculation of Gear Dimensions](https://khkgears.net/new/gear_knowledge/gear_technical_reference/calculation_gear_dimensions.html)

@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-test('design, 3D, 2D, validation, themes and exports work against the real API', async ({
-  page,
-}) => {
+test('static hosting: design, 3D, 2D, validation, themes and real exports', async ({ page }) => {
   const errors: string[] = [];
+  const apiCalls: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname.startsWith('/api/')) apiCalls.push(request.url());
+  });
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
@@ -40,9 +42,10 @@ test('design, 3D, 2D, validation, themes and exports work against the real API',
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   expect(errors).toEqual([]);
+  expect(apiCalls).toEqual([]);
 });
 
-test('mobile layout fits and reports API errors', async ({ page }) => {
+test('mobile layout fits and invalid inputs are rejected without a server', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
@@ -52,15 +55,20 @@ test('mobile layout fits and reports API errors', async ({ page }) => {
   );
   expect(overflow).toBe(false);
   await page.screenshot({ path: '../output/screenshots/workbench-mobile.png', fullPage: true });
-  await page.route('**/api/generate-report', (route) =>
-    route.fulfill({
-      status: 503,
-      contentType: 'application/json',
-      body: JSON.stringify({ detail: 'Testovacia chyba exportu.' }),
-    }),
-  );
-  await page.getByRole('button', { name: /Výpočtová správa/ }).click();
-  await expect(page.getByRole('alert')).toHaveText('Testovacia chyba exportu.');
   await page.getByLabel('Modul m', { exact: true }).fill('-1');
   await expect(page.getByRole('status')).toContainText('module');
+});
+
+test('failed WASM download reports an error and allows a retry', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
+  await page.getByLabel('Povoliť návrhový STEP', { exact: false }).check();
+  await page.route('**/*.wasm', (route) => route.abort());
+  await page.getByRole('button', { name: /Stiahnuť STEP/ }).click();
+  await expect(page.getByRole('alert')).toBeVisible({ timeout: 30000 });
+  await page.unroute('**/*.wasm');
+  await expect(page.getByRole('button', { name: /Stiahnuť STEP/ })).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Stiahnuť STEP/ }).click();
+  expect((await download).suggestedFilename()).toBe('gear-pair-approximate.stp');
 });
