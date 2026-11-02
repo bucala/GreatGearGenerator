@@ -12,7 +12,8 @@
     "build": "tsc -b && vite build",
     "test": "vitest run src",
     "test:e2e": "playwright test",
-    "deploy:surge": "npm run build && surge ./dist greatgeargenerator-bucala.surge.sh"
+    "deploy:surge": "npm run build && surge ./dist greatgeargenerator-bucala.surge.sh",
+    "deploy:request": "gh workflow run deploy.yml --repo bucala/GreatGearGenerator --ref main"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",

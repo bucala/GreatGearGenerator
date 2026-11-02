@@ -1,16 +1,35 @@
-# Great Gear Generator
+<div align="center">
 
-Aplikácia na parametrický návrh vonkajších čelných evolventných súkolesí.
-React + TypeScript + Tailwind CSS + React Three Fiber. Prehliadačové výpočty,
-PDF cez jsPDF a návrhový STEP cez Replicad/OpenCascade WebAssembly.
-Voliteľný Python backend: FastAPI + CadQuery + ReportLab.
-Rozhranie je v slovenčine, PDF report v angličtine.
+# ⚙️ Great Gear Generator
 
-**Online: https://greatgeargenerator-bucala.surge.sh**
+**Od parametrov k súkolesiu.**
 
-Predvolený frontend funguje úplne samostatne, bez Python servera. Postup nasadenia
-a prepínania režimov je v [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-Čisto statické spustenie nevyžaduje Python:
+Návrh, predbežná analýza a CAD export čelných evolventných súkolesí priamo v prehliadači.
+
+[![Otvoriť aplikáciu](https://img.shields.io/badge/OTVORIŤ_APLIKÁCIU-Surge-e9b76d?style=for-the-badge)](https://greatgeargenerator-bucala.surge.sh)
+[![Spustiť deployment](https://img.shields.io/badge/SPUSTIŤ_DEPLOYMENT-GitHub_Actions-74b8b9?style=for-the-badge)](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml)
+
+[![Testy](https://github.com/bucala/GreatGearGenerator/actions/workflows/ci.yml/badge.svg)](https://github.com/bucala/GreatGearGenerator/actions/workflows/ci.yml)
+[![Deployment](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml/badge.svg)](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+[Spustenie](#spustenie) · [Deployment](#deployment) · [Ukážky](#ukazky) · [Funkcie](#funkcie) · [Overenie](#overenie) · [Výpočtový model](docs/ENGINEERING.md)
+
+</div>
+
+[![Tmavá téma a interaktívny 3D náhľad](docs/assets/workbench-dark.png)](https://greatgeargenerator-bucala.surge.sh)
+
+> **Návrhový nástroj:** výsledok „vyhovuje“ označuje predbežné geometrické kontroly.
+> STEP používa výslovne povolenú B-spline aproximáciu. Nejde o certifikované výrobné
+> dáta ani pevnostné overenie podľa ISO 6336 / DIN 3990. [Rozsah a rovnice →](docs/ENGINEERING.md)
+
+## Spustenie
+
+Najrýchlejšie: **[otvoriť online aplikáciu](https://greatgeargenerator-bucala.surge.sh)**.
+Výpočty, 2D/3D, PDF a návrhový STEP fungujú bez samostatného servera.
+
+<details open>
+<summary><strong>💻 Lokálne spustenie — iba Node.js 24 a npm</strong></summary>
 
 ```sh
 cd frontend
@@ -18,67 +37,171 @@ npm ci
 npm run dev
 ```
 
-## Spustenie vo Windows
+Otvorte adresu vypísanú Vite (zvyčajne http://127.0.0.1:5173).
+Pre náhľad produkčného buildu použite `npm run build` a `npm run preview`.
 
-Potrebujete **Python 3.13**, **uv**, **Node.js 24** a npm.
+</details>
+
+<details>
+<summary><strong>🐍 Voliteľný Python backend a Windows launcher</strong></summary>
+
+Potrebujete Python 3.13, uv a Node.js 24.
 
 ```powershell
 .\scripts\start.ps1
 ```
 
-Otvorte **http://127.0.0.1:8000**. Skript nainštaluje uzamknuté závislosti,
-zostaví frontend a spustí lokálny server. Pre ukončenie použite Ctrl+C.
+Aplikácia sa otvorí na http://127.0.0.1:8000. Skript nainštaluje závislosti,
+zostaví frontend a spustí FastAPI. Ukončenie: Ctrl+C.
+Predvolený frontend aj tu počíta v prehliadači. Pre serverové výpočty zostavte
+frontend s `VITE_RUNTIME=api`; [postup je v dokumentácii](docs/DEPLOYMENT.md).
 
-Ručné spustenie (Windows aj Linux):
+Ručné spustenie servera z koreňa projektu:
 
 ```sh
 uv sync --frozen
-cd frontend
-npm ci
-npm run build
-cd ..
 uv run --frozen python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Pre vývoj spustite backend príkazom vyššie s `--reload` a v druhom termináli
-`cd frontend` / `npm run dev`. Vite proxy smeruje `/api` na port 8000.
-Backend ponúka OpenAPI dokumentáciu na `/docs`.
+OpenAPI: http://127.0.0.1:8000/docs. Pri vývoji Vite proxuje `/api` na port 8000.
+
+</details>
+
+## Deployment
+
+**Na vyžiadanie, bez automatického publikovania pri pushi.**
+
+1. Otvorte **[Deploy to Surge](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml)**.
+2. Kliknite na **Run workflow**, vyberte **main** a spustite ho.
+3. Výsledok aj odkaz na aplikáciu nájdete v súhrne behu.
+
+```mermaid
+flowchart LR
+    A[Run workflow] --> B[Testy a build]
+    B --> C[Kontrola STEP a PDF]
+    C --> D[Publikovanie otestovaného buildu]
+    D --> E[Kontrola verzie cez HTTPS]
+    E --> F[Testy verejnej aplikácie]
+```
+
+<details>
+<summary><strong>⌨️ Spustiť deployment z terminálu</strong></summary>
+
+S prihláseným GitHub CLI:
+
+```sh
+gh workflow run deploy.yml --repo bucala/GreatGearGenerator --ref main
+gh run list --repo bucala/GreatGearGenerator --workflow deploy.yml --limit 5
+```
+
+Alebo z adresára `frontend`: `npm run deploy:request`.
+Nie je potrebné lokálne zostavenie ani lokálny Surge token.
+
+</details>
+
+<details>
+<summary><strong>🔐 Čo deployment automaticky zabezpečí</strong></summary>
+
+- Spustí Python, TypeScript a prehliadačové testy vrátane kontroly skutočných exportov.
+- Publikuje presne ten build, ktorý prešiel kontrolami; v deploy kroku ho nezostavuje znova.
+- Používa secret `SURGE_TOKEN` v GitHub prostredí `surge-production`.
+- Token je obmedzený na `greatgeargenerator-bucala.surge.sh`.
+- Nasadenia serializuje, aby sa neprepisovali súbežne; podporuje iba vetvu `main`.
+- Overí publikovaný commit cez `build-info.json`, potom otestuje verejnú aplikáciu.
+- Uloží snímky, exporty a záznamy zlyhaní ako artefakty behu.
+
+Ak zlyhá kontrola po publikovaní, nová verzia už môže byť online. Postup obnovy,
+rotácia tokenu a jednorazové nastavenie sú v [návode na deployment](docs/DEPLOYMENT.md).
+
+GitHub riadi CI/deployment. [GitLab](https://gitlab.com/bucala/GreatGearGenerator)
+je synchronizovaná kópia zdrojov; README odkazuje na rovnaký deployment.
+
+</details>
+
+<a name="ukazky"></a>
+
+## Ukážky
+
+Kliknutie na hlavný náhľad otvorí aplikáciu. Ďalšie pohľady rozbalíte nižšie.
+
+<details>
+<summary><strong>☀️ Svetlá téma a 2D náčrt s kótami</strong></summary>
+
+[![Svetlá téma a 2D náčrt](docs/assets/workbench-light.png)](docs/assets/workbench-light.png)
+
+</details>
+
+<details>
+<summary><strong>📱 Mobilné rozloženie</strong></summary>
+
+<img src="docs/assets/workbench-mobile.png" alt="Mobilný náhľad Great Gear Generator" width="300" />
+
+</details>
 
 ## Funkcie
 
-- Modul, počty zubov, uhol záberu, korekcie, šírka a otvory oboch kolies.
-- Analytické evolventné rovnice, priemery, korekcia hlavových kružníc,
-  pracovná osová vzdialenosť a pracovný uhol záberu.
-- Podrezanie, aktívna evolventná interferencia, záberový pomer a hrúbka hlavy.
-- Otáčateľný 3D náhľad s animáciou a 2D náčrt s hlavnými rozmermi.
-- Odhad Hertzovho napätia a obmedzený Lewisov odhad ohybu v päte.
-- PDF s parametrami, rozmermi, výsledkami a rozsahom platnosti.
-- Voliteľný **aproximovaný návrhový STEP** obsahujúci obe kolesá a otvory.
-- Svetlá/tmavá téma, responzívne rozhranie, validácia a spracovanie chýb.
+| Návrh | Výsledok |
+| --- | --- |
+| Modul, zuby, uhol, korekcie, šírka, otvory | Analytické rozmery oboch kolies a pracovná osová vzdialenosť |
+| Otáčateľný 3D model a animácia | Prehľad súkolesia s priblížením a otáčaním |
+| 2D náčrt | Kružnice, hlavné rozmery a osová vzdialenosť |
+| Geometrická analýza | Riziko podrezania, evolventná interferencia, záber a hrúbka hlavy |
+| Zaťaženie a materiál | Hertzov odhad; Lewisov odhad pre nekorigované 20° ozubenie |
+| PDF správa | Parametre, tabuľky, výsledky a obmedzenia výpočtu |
+| Návrhový STEP | Dve telesá s otvormi; až po povolení aproximácie |
 
-## Dôležitá odchýlka od návrhu: exaktný STEP
+<details>
+<summary><strong>📐 Presnosť CAD a hranice výpočtu</strong></summary>
 
-Požiadavka „CadQuery, evolventa bez akejkoľvek B-spline aproximácie a export STEP“
-nie je týmto implementovaným postupom splnená. CadQuery `parametricCurve` používa
-spline aproximáciu; výsledok preto neoznačujeme ako exaktnú výrobnú geometriu.
-Predvolené volanie serverového STEP endpointu skončí 422. Návrhový export sa odomkne len
-po explicitnom súhlase s aproximáciou v rozhraní / `allow_approximation: true` v API.
+Evolventné rovnice sa vyhodnocujú analyticky. Náhľad je vzorkovaný; STEP používa
+B-spline aproximáciu 65 analytických bodov na bok, kružnicové oblúky a radiálnu
+pätu. Exaktný STEP bez spline aproximácie nie je implementovaný. Nie je
+certifikovaná globálna hranica geometrickej odchýlky.
 
-Serverový export interpoluje 65 analyticky vypočítaných bodov na každom boku zuba;
-prehliadačový export aproximuje B-spline cez 65 analytických vzoriek. Oba exporty
-spájajú hlavy a päty kružnicovými oblúkmi a používajú radiálny prechod do päty.
-Nemá certifikovanú globálnu hranicu geometrickej odchýlky. Výrobná trochoida,
-podrezaná päta, zaoblenie a vôľa nie sú modelované. STEP sa pri nevyhovujúcich
-geometrických kontrolách nevygeneruje. Náhľad používa vzorkovanú geometriu.
+Výrobná trochoida, podrezaná päta, zaoblenie ani vôľa nie sú modelované.
+Zaťažovacie odhady nezahŕňajú únavu, dynamiku ani bezpečnostné súčinitele.
+Neplatný návrh blokuje STEP export. PDF zostáva dostupné aj pre nevyhovujúci návrh.
 
-Výsledok **vyhovuje** sa týka výlučne uvedených predbežných geometrických kontrol.
-Nejde o výpočet únosnosti či certifikáciu podľa ISO 6336 / DIN 3990.
-Presné rovnice, predpoklady a zdroje sú v [docs/ENGINEERING.md](docs/ENGINEERING.md).
+[Podrobné rovnice a zdroje →](docs/ENGINEERING.md)
 
-## API
+</details>
 
-`POST /api/analyze`, `POST /api/generate-report`, `POST /api/generate-step`
-prijímajú JSON. Vynechané parametre získajú predvolené hodnoty:
+## Overenie
+
+<details>
+<summary><strong>🧪 Spustiť kompletné kontroly lokálne</strong></summary>
+
+Z koreňa projektu:
+
+```sh
+uv sync --frozen --group dev
+uv run pytest -q
+uv run ruff check backend scripts
+uv run ruff format --check backend scripts
+cd frontend
+npm ci
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+cd ..
+uv run python scripts/verify_browser_exports.py
+```
+
+Testy pokrývajú referenčné matematické prípady, validáciu, 3D/2D, témy,
+responzivitu, chybové stavy, sťahovanie PDF a spätné načítanie STEP cez CadQuery.
+Snímky a výstupy sú v ignorovanom adresári `output/`.
+
+</details>
+
+<details>
+<summary><strong>🔌 API a technológie</strong></summary>
+
+Frontend: React, TypeScript, Tailwind CSS, React Three Fiber, Three.js, jsPDF,
+Replicad a OpenCascade WebAssembly. Voliteľný backend: FastAPI, CadQuery a ReportLab.
+Rozhranie je po slovensky; PDF report po anglicky.
+
+`POST /api/analyze`, `POST /api/generate-report`, `POST /api/generate-step`:
 
 ```json
 {
@@ -88,45 +211,29 @@ prijímajú JSON. Vynechané parametre získajú predvolené hodnoty:
 }
 ```
 
-Jednotky: mm, N·m, ot/min, MPa. STEP vyžaduje navyše `allow_approximation: true`.
-`GET /api/health` uvádza aj `exact_step: false`.
-CAD export je serializovaný; súbežná požiadavka dostane 503. Dočasné súbory sa
-po odpovedi odstránia. Aplikácia je určená na lokálne použitie; nemá autentifikáciu.
+Jednotky: mm, N·m, ot/min, MPa. Serverový STEP navyše vyžaduje
+`allow_approximation: true`. `GET /api/health` uvádza `exact_step: false`.
+API je určené na lokálne použitie a nemá autentifikáciu.
 
-## Testovanie
+Závislosti uzamykajú `uv.lock` a `frontend/package-lock.json`.
 
-```sh
-uv sync --frozen --group dev
-uv run pytest -q
-uv run ruff check backend
-uv run ruff format --check backend
-cd frontend
-npm ci
-npm test
-npm run build
-npx playwright install chromium
-npm run test:e2e
-```
+</details>
 
-Testy overujú analytické identity, referenčné rozmery, korigovaný prípad KHK,
-neplatné vstupy, záťaže, PDF obsah, STEP round-trip cez OpenCASCADE a kompletný
-tok v skutočnom prehliadači. E2E automaticky spustí statický server so zostaveným
-frontendom bez Python API. Snímky a exporty vytvorí v ignorovanom adresári `output/`.
-GitHub Actions spúšťa rovnaké kontroly na Linuxe.
-
-## Štruktúra
+<details>
+<summary><strong>🗂️ Mapa projektu</strong></summary>
 
 ```text
-backend/app/       FastAPI, validácia, výpočty, CAD a report
-backend/tests/     testy výpočtov a API
-frontend/src/      React rozhranie, 2D/3D náhľad a testy vstupov
-frontend/e2e/      Playwright testy celej aplikácie
-docs/             rovnice a obmedzenia
-scripts/          spustenie aplikácie vo Windows
-.github/workflows/ automatické kontroly
-uv.lock           uzamknuté Python závislosti
+frontend/src/       rozhranie, matematika, CAD worker a PDF export
+frontend/e2e/       testy celej aplikácie v prehliadači
+backend/app/        voliteľné Python API a CAD jadro
+backend/tests/      matematické a API testy
+scripts/            spustenie, overenie exportov a verzia nasadenia
+docs/               deployment, výpočtový model a náhľady
+.github/workflows/  automatické kontroly a deployment na vyžiadanie
 ```
 
-Python závislosti sú definované v `pyproject.toml` a uzamknuté v `uv.lock`.
-`backend/requirements.txt` je export pre alternatívnu inštaláciu cez pip.
-Frontend závislosti uzamyká `frontend/package-lock.json`.
+</details>
+
+---
+
+[Online aplikácia](https://greatgeargenerator-bucala.surge.sh) · [Spustiť deployment](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml) · [GitHub](https://github.com/bucala/GreatGearGenerator) · [GitLab](https://gitlab.com/bucala/GreatGearGenerator) · [MIT licencia](LICENSE)

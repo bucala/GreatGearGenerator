@@ -1,0 +1,94 @@
+name: Deploy to Surge
+run-name: Deploy main to Surge by @${{ github.actor }}
+
+# Publishing is deliberate: pushes and pull requests only run Verify.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: surge-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Test and build
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Publish and verify production
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: surge-production
+      url: https://greatgeargenerator-bucala.surge.sh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+      - name: Install verification dependencies
+        run: uv sync --frozen --group dev
+      - run: npm ci
+        working-directory: frontend
+      - uses: actions/download-artifact@v4
+        with:
+          name: surge-site-${{ github.sha }}
+          path: frontend/dist
+      - name: Check deployment credential
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        run: |
+          if [ -z "$SURGE_TOKEN" ]; then
+            echo '::error::Missing SURGE_TOKEN secret. See docs/DEPLOYMENT.md.'
+            exit 1
+          fi
+      - name: Publish the tested artifact
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        run: npx --yes surge@0.55.0 ./frontend/dist greatgeargenerator-bucala.surge.sh
+      - name: Verify published revision over HTTPS
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: node scripts/check-deployment.mjs
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Exercise the live application and download exports
+        env:
+          TEST_BASE_URL: https://greatgeargenerator-bucala.surge.sh
+        run: npm run test:e2e
+        working-directory: frontend
+      - name: Verify live STEP and PDF downloads
+        run: uv run python scripts/verify_browser_exports.py
+      - name: Deployment summary
+        if: always()
+        env:
+          DEPLOY_STATUS: ${{ job.status }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          {
+            echo '## Surge deployment'
+            echo ''
+            echo 'Application: https://greatgeargenerator-bucala.surge.sh'
+            echo "Commit: $DEPLOY_SHA"
+            echo "Result: $DEPLOY_STATUS"
+            echo ''
+            echo 'If a post-deploy check failed, review the logs: the published revision may already be live.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-verification
+          path: |
+            output/
+            frontend/test-results/
+          retention-days: 7
