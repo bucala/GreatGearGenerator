@@ -1,0 +1,18 @@
+[project]
+name = "great-gear-generator"
+version = "0.1.0"
+description = "Parametric spur gear design workbench"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "cadquery>=2.6,<3", "reportlab>=4.4,<5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "httpx>=0.28,<1", "pypdf>=6,<7", "ruff>=0.14,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
