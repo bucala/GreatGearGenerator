@@ -234,20 +234,6 @@ export default function App() {
           </button>
         </div>
       </header>
-      {workflow === 'reverse' && (
-        <div className="page-heading">
-          <div>
-            <div className="eyebrow">
-              NÁVRH PREVODOV <ChevronRight size={12} /> ČELNÉ OZUBENIE
-            </div>
-            <h1>
-              Od merania k ozubeniu
-              <span>.</span>
-            </h1>
-            <p>Modul nemusíte poznať. Hľadáme ho z rozmerov reálneho kolesa.</p>
-          </div>
-        </div>
-      )}
       <div className="workflow-tabs mode-tabs" role="group" aria-label="Spôsob návrhu">
         <button
           type="button"
