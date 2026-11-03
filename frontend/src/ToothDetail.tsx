@@ -321,19 +321,6 @@ export default function ToothDetail({ result }: { result: Analysis }) {
                       stroke="#c86327"
                       strokeWidth={0.05 * m}
                     />
-                    {i === 0 && g.root_fillet && (
-                      <>
-                        <path
-                          d={`M ${xy(segmentPoint(g, e, 0.5))} L ${-1.9 * m} ${-rf + 0.7 * m} H ${0.7 * m}`}
-                          fill="none"
-                          stroke="#c86327"
-                          strokeWidth={0.015 * m}
-                        />
-                        <text x={-0.6 * m} y={-rf + 0.95 * m} fill="#a44b1f" fontSize={0.24 * m}>
-                          R = {fmt(d.radius)}
-                        </text>
-                      </>
-                    )}
                   </g>
                 ))}
           </g>

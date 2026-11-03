@@ -511,6 +511,7 @@ export default function App() {
                           <Scene
                             result={result}
                             animate={animate && fresh}
+                            interactive={fresh && !cadBusy}
                             onCadBusy={setCadBusy}
                           />
                         </Suspense>
@@ -531,12 +532,14 @@ export default function App() {
                 </div>
                 {mode === '3d' && (
                   <button
-                    className="animate-button"
-                    disabled={!fresh}
+                    type="button"
+                    className="viewer-control animate-button"
+                    disabled={!fresh || cadBusy}
                     onClick={() => setAnimate(!animate)}
-                    aria-label={animate ? 'Zastaviť animáciu' : 'Spustiť animáciu'}
+                    aria-pressed={animate}
                   >
                     {animate ? <Pause size={15} /> : <Play size={15} />}
+                    {animate ? 'Pozastaviť otáčanie' : 'Spustiť otáčanie'}
                   </button>
                 )}
               </div>

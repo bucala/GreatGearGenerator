@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Grid, Html } from '@react-three/drei';
 import { BufferGeometry, Float32BufferAttribute, ExtrudeGeometry, Mesh, Path, Shape } from 'three';
 import { generateMesh, type CadMesh } from './browserMesh';
 import type { Analysis, Gear } from './types';
+
+const cameraPosition: [number, number, number] = [82, 105, 115];
+const cameraDistance = Math.hypot(...cameraPosition);
+const minDistance = 35;
+const maxDistance = 400;
 
 function GearMesh({
   gear,
@@ -44,9 +50,8 @@ function GearMesh({
     return new ExtrudeGeometry(shape, { depth: width, bevelEnabled: false, curveSegments: 48 });
   }, [gear, width, cad]);
   useEffect(() => () => geometry.dispose(), [geometry]);
-  useFrame(({ clock }) => {
-    if (ref.current)
-      ref.current.rotation.z = phase + (animate ? clock.getElapsedTime() * speed : 0);
+  useFrame((_, delta) => {
+    if (ref.current && animate) ref.current.rotation.z += Math.min(delta, 0.1) * speed;
   });
   return (
     <mesh ref={ref} geometry={geometry} position={[x, 0, -width / 2]} rotation={[0, 0, phase]}>
@@ -58,12 +63,23 @@ function GearMesh({
 export default function Scene({
   result,
   animate,
+  interactive,
   onCadBusy,
 }: {
   result: Analysis;
   animate: boolean;
+  interactive: boolean;
   onCadBusy?: (busy: boolean) => void;
 }) {
+  const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
+  const [distance, setDistance] = useState(cameraDistance);
+  const zoom = Math.round((cameraDistance / distance) * 100);
+  function changeZoom(closer: boolean) {
+    const orbit = controls.current;
+    if (!orbit) return;
+    if (closer) orbit.dollyIn(0.8);
+    else orbit.dollyOut(0.8);
+  }
   const key = JSON.stringify(
     result.gears.map((g) => ({
       teeth: g.teeth,
@@ -111,7 +127,7 @@ export default function Scene({
     >
       <Canvas
         frameloop={animate && ready ? 'always' : 'demand'}
-        camera={{ position: [82, 105, 115], fov: 40 }}
+        camera={{ position: cameraPosition, fov: 40 }}
         aria-label="Interaktívny 3D náhľad súkolesia"
       >
         <ambientLight intensity={1.7} />
@@ -159,8 +175,51 @@ export default function Scene({
           fadeDistance={280}
           infiniteGrid
         />
-        <OrbitControls makeDefault minDistance={35} maxDistance={400} />
+        <OrbitControls
+          ref={controls}
+          makeDefault
+          minDistance={minDistance}
+          maxDistance={maxDistance}
+          onChange={() => {
+            if (controls.current) setDistance(controls.current.getDistance());
+          }}
+        />
       </Canvas>
+      <div className="viewer-zoom-controls" role="group" aria-label="Priblíženie 3D modelu">
+        <button
+          type="button"
+          className="viewer-control"
+          aria-label="Oddialiť 3D model"
+          title="Oddialiť"
+          disabled={!interactive || !ready || distance >= maxDistance - 0.01}
+          onClick={() => changeZoom(false)}
+        >
+          <ZoomOut size={18} />
+        </button>
+        <output aria-label="Priblíženie" aria-live="polite">
+          {zoom} %
+        </output>
+        <button
+          type="button"
+          className="viewer-control"
+          aria-label="Priblížiť 3D model"
+          title="Priblížiť"
+          disabled={!interactive || !ready || distance <= minDistance + 0.01}
+          onClick={() => changeZoom(true)}
+        >
+          <ZoomIn size={18} />
+        </button>
+        <button
+          type="button"
+          className="viewer-control"
+          aria-label="Obnoviť 3D pohľad"
+          title="Obnoviť pohľad"
+          disabled={!interactive || !ready}
+          onClick={() => controls.current?.reset()}
+        >
+          <Maximize2 size={17} />
+        </button>
+      </div>
     </div>
   );
 }

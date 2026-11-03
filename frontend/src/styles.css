@@ -437,18 +437,47 @@ h1 > span {
 .viewer-footer .teal {
   margin-left: 10px;
 }
-.animate-button {
-  position: absolute;
-  right: 17px;
-  bottom: 17px;
+.viewer-control {
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--text);
-  width: 30px;
-  height: 30px;
+  min-width: 44px;
+  height: 44px;
   border-radius: 6px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.viewer-control:hover:not(:disabled),
+.viewer-control[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.viewer-zoom-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.viewer-zoom-controls output {
+  min-width: 51px;
+  text-align: center;
+  font: 11px monospace;
+  color: var(--text);
+}
+.animate-button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 0 12px;
 }
 .sketch {
   width: 100%;

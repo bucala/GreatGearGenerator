@@ -78,6 +78,10 @@ kópia pre rovnaké geometrické parametre. Ďalší export tak nemusí opakova�
 Odhad napätí používa konzervatívnu strednú šírku `b_eff=b−2 max(R_hrán)`;
 nenahrádza tým priestorové rozdelenie zaťaženia ani pevnostnú analýzu.
 
+3D náhľad podporuje priblíženie kolieskom, dotykovým gestom aj tlačidlami.
+Percento vyjadruje pomer pôvodnej a aktuálnej vzdialenosti kamery od stredu scény.
+Obnovenie pohľadu vráti pôvodnú kameru; pauza otáčania zachová polohu kolies.
+
 ### Kótovaný detail zuba a medzery
 
 V režime priameho návrhu je pre každé koleso samostatný zväčšený detail aj export SVG.
@@ -85,6 +89,7 @@ Referenčné kružnice majú krátke značky A (hlavová), B (rozstupová), C (z
 a D (pätná). Hodnoty a vzory čiar sú v oddelenej legende; geometria je orezaná
 na vlastnú kresliacu oblasť, aby čiary nevstupovali do textu legendy. Rovnaké
 oddelenie zostáva aj v exportovanom SVG.
+Polomery zaoblenia sú uvedené v legende; detail neobsahuje odkazovú čiaru rádusu.
 `d / Dr` označuje rozstupový priemer; `df / Df` pätný, `da` hlavový, `db` základný.
 Kóty vznikajú priamo z aktuálneho výpočtu, nie meraním vzorkovaného náhľadu:
 

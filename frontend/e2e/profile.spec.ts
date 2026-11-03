@@ -78,6 +78,7 @@ test('rounded roots, dimensioned tooth/space SVG and actual rounded STEP export'
   await page.getByLabel('S navrhovaným zaoblením päty', { exact: true }).check();
   await expect(drawing).toContainText('KRUHOVÉ ZAOBLENIE PÄTY');
   await expect(drawing).toContainText('R päty = 0,6');
+  await expect(drawing).not.toContainText('R =');
   await expect(drawing).toContainText('Ø d / Dr = 48');
   await expect(drawing).toContainText('Ø dᶠ = 43');
   await detail.screenshot({ path: '../output/screenshots/dimensioned-tooth-rounded.png' });
