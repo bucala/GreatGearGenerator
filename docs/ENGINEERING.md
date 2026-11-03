@@ -36,6 +36,42 @@ Evolventa sa začína na max(rb, rf) a končí na ra. Ak rf < rb, nasleduje radi
 úsek medzi pätou a základnou kružnicou. Je to návrhový prechod, nie výrobná
 trochoida. Model nesimuluje podrezanie pri výrobe.
 
+### Voliteľné kruhové zaoblenie päty
+
+Vstup `root_fillet` je 0 (bez zaoblenia, predvolené) alebo 1 (navrhované kruhové prechody).
+Východiskový návrh je R=0,3m, nie normové odporúčanie nástroja. Polomer sa podľa
+priestoru automaticky zmenší tak, aby sa susedné prechody neprekrývali a zostalo
+aspoň 35 % pôvodného intervalu evolventy. Ak to nie je možné, model sa odmietne.
+
+Kružnica zaoblenia je zvonka dotyčnicová k pätnej kružnici, preto jej stred C
+spĺňa |C|=rf+R. Ak dotyk ešte leží na radiálnom predĺžení boku, jeho polomer je
+rt=sqrt(rf²+2rfR). Ak rt>rb, prechod sa dotýka evolventy pri parametri
+`t=(sqrt((rf+R)²−rb²)−R)/rb`. Stred leží na vonkajšej normále boku vo vzdialenosti
+R. Pravá strana je zrkadlenie ľavej. Kruhové úseky sú v STEP a SVG skutočné oblúky;
+náhľad 3D ich vzorkuje. Výsledný R pre každé koleso uvádza rozhranie aj PDF.
+
+Zaoblenie pridáva materiál v päte, nemení rozstupový, hlavový, základný ani pätný
+priemer. Nie je to simulácia výroby, generovaná trochoida, úprava hlavy ani
+zaoblenie hrán po šírke. Návrh nástroja, kvalita výroby a účinok R na koncentráciu
+napätia/únavu nie sú overené. Predbežný Lewisov odhad zostáva nominálny.
+
+### Kótovaný detail zuba a medzery
+
+V režime priameho návrhu je pre každé koleso samostatný zväčšený detail aj export SVG.
+`d / Dr` označuje rozstupový priemer; `df / Df` pätný, `da` hlavový, `db` základný.
+Kóty vznikajú priamo z aktuálneho výpočtu, nie meraním vzorkovaného náhľadu:
+
+- `p=πm`, `s=m(π/2+2x tan α)`, `e=p−s` sú **oblúkové** dĺžky na referenčnej
+  rozstupovej kružnici, nie tetivy.
+- `ha=(da−d)/2`, `hf=(d−df)/2`, `h=ha+hf`; skrátenie hlavy k je zahrnuté v da.
+- Náčrt zobrazuje aj m, z, α, x, šírku b, otvor a skutočne použitý R.
+- Tabuľka obsahuje aj základný rozstup `pb=p cos α`, hrúbku zuba `sa` a medzeru `ea`
+  na hlavovej kružnici a voľný oblúk medzi prechodmi na pätnej kružnici `ef`.
+- Geometria oblúkov je vektorová; evolventa v SVG je lomená čiara z 96 intervalov
+  na bok. Analytické kóty tým nie sú zmenené. SVG nie je exaktný výrobný profil
+  ani automaticky výkres v tlačovej mierke 1:1. Rozhranie zobrazuje hodnoty zaokrúhlené
+  na štyri desatinné miesta v mm, čo nepredstavuje výrobnú toleranciu.
+
 ## Predbežné kontroly
 
 - Riziko podrezania pri hrebeňovom nástroji: z < 2(1−x)/sin² α.
@@ -43,7 +79,8 @@ trochoida. Model nesimuluje podrezanie pri výrobe.
 - qᵢ = sqrt(raᵢ²−rbᵢ²), L = a sin αw.
 - εα = (q₁+q₂−L)/(πm cos α); trvalý záber vyžaduje εα ≥ 1.
 - Pre aktívnu evolventu sa kontroluje q₁ ≤ L−s₂ a q₂ ≤ L−s₁,
-  kde sᵢ = sqrt(max(rbᵢ,rfᵢ)²−rbᵢ²). Kontrola nezahŕňa kontakt s generovanou
+  kde sᵢ = sqrt(max(rbᵢ,rfᵢ)²−rbᵢ²) bez zaoblenia; pri zaoblení sᵢ=rbᵢ·tᵢ
+  od jeho dotyku s aktívnym bokom. Kontrola nezahŕňa kontakt s generovanou
   trochoidou, tolerancie, vôľu ani deformácie.
 - Hrúbka na hlave da·(βb−θ(ta)) má byť aspoň 0,25m. Je to návrhové odporúčanie,
   nie vyhlásenie zhody s normou.
@@ -76,7 +113,7 @@ Predvolený export je zamietnutý, alternatívny návrhový export vyžaduje exp
 zapnutie aproximácie.
 
 Alternatíva používa `Edge.makeSpline` cez 65 bodov na bok, presné kružnicové
-oblúky hláv/pät a radiálne prechody. Parameter `tol=1e-8` je tolerancia
+oblúky hláv/pät a radiálne alebo voliteľné dotyčnicové kruhové prechody. Parameter `tol=1e-8` je tolerancia
 interpolačného algoritmu, **nie certifikovaná maximálna odchýlka od evolventy**.
 Neuvádzame neoverenú výrobnú presnosť. Exportuje sa jedno STEP s dvomi telesami,
 šírkou a otvormi. Koleso 2 je fázované o π−π/z₂ a posunuté o a.
@@ -84,11 +121,11 @@ Neuvádzame neoverenú výrobnú presnosť. Exportuje sa jedno STEP s dvomi tele
 ## Prehliadačový runtime na Surge
 
 Frontend používa tie isté rovnice a hranice vstupov v `frontend/src/geometry.ts`.
-Sedem referenčných prípadov generovaných Python jadrom kontroluje skalárne hodnoty,
+Deväť referenčných prípadov generovaných Python jadrom kontroluje skalárne hodnoty,
 geometrické kontroly a vzorky oboch profilov. PDF vytvára jsPDF.
 STEP generuje samostatný worker s Replicad/OpenCascade.js: B-spline aproximácia
 65 analytických bodov na bok (`tolerance=1e-7` pre aproximátor), kružnicové oblúky,
-radiálna päta, otvory a dve telesá v pracovnej osovej vzdialenosti. Tolerancia
+radiálna alebo kruhovo zaoblená päta, otvory a dve telesá v pracovnej osovej vzdialenosti. Tolerancia
 aproximátora nie je certifikovaný globálny limit odchýlky evolventy. Exaktný STEP
 zostáva nepodporovaný. Pri každom exporte sa overí objem oboch telies; CI navyše
 spätne načíta stiahnutý súbor desktopovým OpenCascade jadrom a overí platnosť.

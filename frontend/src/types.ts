@@ -1,4 +1,5 @@
 export type Design = {
+  root_fillet?: number;
   module: number;
   teeth1: number;
   teeth2: number;
@@ -14,6 +15,7 @@ export type Design = {
   poisson_ratio: number;
 };
 export const defaults: Design = {
+  root_fillet: 0,
   module: 2,
   teeth1: 24,
   teeth2: 48,
@@ -29,6 +31,7 @@ export const defaults: Design = {
   poisson_ratio: 0.3,
 };
 export type Gear = {
+  root_fillet: RootFillet | null;
   teeth: number;
   profile_shift: number;
   pitch_diameter: number;
@@ -43,6 +46,13 @@ export type Gear = {
   undercut: boolean;
   tip_thickness: number;
   outline: [number, number][];
+};
+export type RootFillet = {
+  radius: number;
+  t: number;
+  center: [number, number];
+  root: [number, number];
+  tangent: [number, number];
 };
 export type Analysis = {
   parameters: Design;

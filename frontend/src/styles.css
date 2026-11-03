@@ -1078,6 +1078,75 @@ h1 > span {
   flex-wrap: wrap;
   margin-bottom: 22px;
 }
+.model-selection {
+  margin: 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.model-selection legend {
+  color: var(--muted);
+  font-size: 11px;
+  padding: 0 5px;
+}
+.model-selection label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  margin: 10px 0;
+}
+.model-selection input {
+  accent-color: var(--accent);
+}
+.model-selection .hint {
+  line-height: 1.6;
+  margin-top: 10px;
+}
+.tooth-detail {
+  min-width: 0;
+}
+.tooth-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px;
+}
+.tooth-toolbar .secondary {
+  font-size: 11px;
+}
+.tooth-drawing-scroll {
+  overflow-x: auto;
+  background: white;
+}
+.tooth-drawing-scroll svg {
+  display: block;
+  width: 100%;
+  min-width: 760px;
+}
+.tooth-values {
+  padding: 18px;
+}
+.tooth-values dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+.tooth-values dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.tooth-values dd {
+  margin: 5px 0 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.tooth-values .hint {
+  margin-top: 18px;
+  line-height: 1.7;
+}
 .reverse-advanced {
   margin-top: 16px;
 }

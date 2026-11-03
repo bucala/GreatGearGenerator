@@ -19,7 +19,8 @@ import {
   type Point,
   type Solid,
 } from 'replicad';
-import { calculate, flank, polar, type Point2 } from './geometry';
+import { calculate, type Point2 } from './geometry';
+import { profileSegments, segmentPoint } from './profile';
 import type { Design, Gear } from './types';
 
 const point = ([x, y]: Point2): Point => [x, y, 0];
@@ -28,38 +29,17 @@ function buildGear(g: Gear, width: number): Solid {
   const edges: Edge[] = [];
   const rf = g.root_diameter / 2,
     ra = g.tip_diameter / 2;
-  const t0 = g.t_start,
-    t1 = g.t_end;
-  const h0 = g.base_half_angle - (t0 - Math.atan(t0));
-  const h1 = g.base_half_angle - (t1 - Math.atan(t1));
-  const pitch = (2 * Math.PI) / g.teeth;
-  function line(a: Point2, b: Point2) {
-    if (Math.hypot(a[0] - b[0], a[1] - b[1]) > 1e-8) edges.push(makeLine(point(a), point(b)));
-  }
-  function arc(r: number, a: number, b: number) {
-    // Replicad order is start, THROUGH, end (verified against the implementation).
-    edges.push(
-      makeThreePointArc(point(polar(r, a)), point(polar(r, (a + b) / 2)), point(polar(r, b))),
-    );
-  }
-  for (let i = 0; i < g.teeth; i++) {
-    const a = i * pitch;
-    line(polar(rf, a - h0), flank(g, a, -1, t0));
-    edges.push(
-      makeBSplineApproximation(
-        Array.from({ length: 65 }, (_, j) => point(flank(g, a, -1, t0 + ((t1 - t0) * j) / 64))),
-        { tolerance: 1e-7 },
-      ),
-    );
-    arc(ra, a - h1, a + h1);
-    edges.push(
-      makeBSplineApproximation(
-        Array.from({ length: 65 }, (_, j) => point(flank(g, a, 1, t1 - ((t1 - t0) * j) / 64))),
-        { tolerance: 1e-7 },
-      ),
-    );
-    line(flank(g, a, 1, t0), polar(rf, a + h0));
-    arc(rf, a + h0, a + pitch - h0);
+  for (const edge of profileSegments(g)) {
+    const at = (u: number) => point(segmentPoint(g, edge, u));
+    if (edge.kind === 'line') edges.push(makeLine(at(0), at(1)));
+    else if (edge.kind === 'arc') edges.push(makeThreePointArc(at(0), at(0.5), at(1)));
+    else
+      edges.push(
+        makeBSplineApproximation(
+          Array.from({ length: 65 }, (_, j) => at(j / 64)),
+          { tolerance: 1e-7 },
+        ),
+      );
   }
   const wire = assembleWire(edges);
   // Hole wires must have the opposite orientation to the outer wire.

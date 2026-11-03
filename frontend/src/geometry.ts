@@ -3,6 +3,7 @@
  * See docs/ENGINEERING.md for the scope of these preliminary calculations.
  */
 import type { Analysis, Design, Gear } from './types';
+import { proposeRootFillet, roundedOutline } from './profile';
 
 const { PI, sin, cos, tan, atan, sqrt, max, hypot, abs } = Math;
 const radians = (angle: number) => (angle * PI) / 180;
@@ -14,6 +15,7 @@ export const polar = (radius: number, angle: number): Point2 => [
 ];
 
 const bounds: Record<keyof Design, [number, number]> = {
+  root_fillet: [0, 1],
   module: [0.2, 10],
   teeth1: [8, 120],
   teeth2: [8, 120],
@@ -32,10 +34,13 @@ const bounds: Record<keyof Design, [number, number]> = {
 export function validate(p: Design) {
   for (const key of Object.keys(bounds) as (keyof Design)[]) {
     const [lo, hi] = bounds[key];
-    if (typeof p[key] !== 'number' || !Number.isFinite(p[key]) || p[key] < lo || p[key] > hi) {
+    const value = key === 'root_fillet' ? (p[key] ?? 0) : p[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < lo || value > hi) {
       throw new Error(`${key}: zadajte hodnotu od ${lo} do ${hi}.`);
     }
   }
+  if (p.root_fillet !== undefined && !Number.isInteger(p.root_fillet))
+    throw new Error('Vyberte model bez zaoblenia alebo s navrhovaným zaoblením.');
   if (!Number.isInteger(p.teeth1) || !Number.isInteger(p.teeth2)) {
     throw new Error('Počet zubov musí byť celé číslo.');
   }
@@ -85,7 +90,15 @@ function outline(g: Gear, samples = 14): Point2[] {
   );
 }
 
-function gear(m: number, z: number, alpha: number, x: number, k: number, bore: number): Gear {
+function gear(
+  m: number,
+  z: number,
+  alpha: number,
+  x: number,
+  k: number,
+  bore: number,
+  round: boolean,
+): Gear {
   const d = m * z,
     db = d * cos(alpha);
   const da = m * (z + 2 + 2 * x - 2 * k),
@@ -102,6 +115,7 @@ function gear(m: number, z: number, alpha: number, x: number, k: number, bore: n
   if (halfTip <= 1e-5 || halfRoot >= PI / z)
     throw new Error('Korekcia vytvára špicatý zub alebo prekrývajúce sa päty zubov.');
   const g: Gear = {
+    root_fillet: null,
     teeth: z,
     profile_shift: x,
     pitch_diameter: d,
@@ -117,7 +131,8 @@ function gear(m: number, z: number, alpha: number, x: number, k: number, bore: n
     tip_thickness: da * halfTip,
     outline: [],
   };
-  g.outline = outline(g);
+  if (round) g.root_fillet = proposeRootFillet(g, m);
+  g.outline = round ? roundedOutline(g) : outline(g);
   return g;
 }
 
@@ -129,8 +144,8 @@ export function calculate(p: Design): Analysis {
   const a0 = (p.module * (p.teeth1 + p.teeth2)) / 2;
   const a = (a0 * cos(alpha)) / cos(aw);
   const k = xsum - (a - a0) / p.module;
-  const g1 = gear(p.module, p.teeth1, alpha, p.profile1, k, p.bore1);
-  const g2 = gear(p.module, p.teeth2, alpha, p.profile2, k, p.bore2);
+  const g1 = gear(p.module, p.teeth1, alpha, p.profile1, k, p.bore1, !!p.root_fillet);
+  const g2 = gear(p.module, p.teeth2, alpha, p.profile2, k, p.bore2, !!p.root_fillet);
   const gears: [Gear, Gear] = [g1, g2];
   const rb1 = g1.base_diameter / 2,
     rb2 = g2.base_diameter / 2;
@@ -138,8 +153,8 @@ export function calculate(p: Design): Analysis {
   const q2 = sqrt((g2.tip_diameter / 2) ** 2 - rb2 ** 2);
   const span = a * sin(aw);
   const contactRatio = (q1 + q2 - span) / (PI * p.module * cos(alpha));
-  const start1 = sqrt(max(0, max(rb1, g1.root_diameter / 2) ** 2 - rb1 ** 2));
-  const start2 = sqrt(max(0, max(rb2, g2.root_diameter / 2) ** 2 - rb2 ** 2));
+  const start1 = rb1 * (g1.root_fillet?.t ?? g1.t_start);
+  const start2 = rb2 * (g2.root_fillet?.t ?? g2.t_start);
   const interference = q1 > span - start2 + 1e-8 || q2 > span - start1 + 1e-8;
   const rw1 = (a * p.teeth1) / (p.teeth1 + p.teeth2),
     rw2 = (a * p.teeth2) / (p.teeth1 + p.teeth2);
@@ -159,7 +174,9 @@ export function calculate(p: Design): Analysis {
     {
       name: 'Evolventná interferencia',
       ok: !interference,
-      detail: 'Kontrola aktívnej dráhy záberu',
+      detail: p.root_fillet
+        ? 'Aktívny bok nad navrhovaným zaoblením päty'
+        : 'Kontrola aktívnej dráhy záberu',
     },
     { name: 'Trvalý záber', ok: contactRatio >= 1, detail: `εα = ${contactRatio.toFixed(3)} ≥ 1` },
     {
@@ -185,7 +202,9 @@ export function calculate(p: Design): Analysis {
     geometry_ok: checks.every((c) => c.ok),
     limitations: [
       'Predbežný výpočet; nejde o overenie podľa ISO 6336 ani DIN 3990.',
-      'Päty sú radiálne prechody bez generovanej trochoidy a zaoblenia.',
+      p.root_fillet
+        ? 'Navrhované kruhové zaoblenia päty nie sú výrobná trochoida; pevnostný účinok nie je overený.'
+        : 'Päty sú radiálne prechody bez generovanej trochoidy a zaoblenia.',
       'Napätia sú odhady bez dynamických faktorov a bezpečnostného súčiniteľa.',
       'STEP bez aproximácie nie je týmto CAD jadrom podporovaný.',
     ],

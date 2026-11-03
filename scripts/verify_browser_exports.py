@@ -1,8 +1,9 @@
 """Verify real browser downloads after Playwright using the independent CAD engine."""
 
 import sys
-from math import isclose
+from math import isclose, isfinite
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -13,19 +14,32 @@ from backend.app.cad import build_gear
 from backend.app.geometry import analyze
 from backend.app.models import Design
 
-result = analyze(Design())
-path = Path("output/samples/gear-pair-approximate.stp")
-assert b"ISO-10303-21" in path.read_bytes(), "Not a STEP file"
-solids = cq.importers.importStep(str(path)).solids().vals()
-assert len(solids) == 2, "STEP must contain both gears"
-for index, (solid, gear) in enumerate(zip(solids, result["gears"])):
-    assert solid.isValid(), f"Invalid solid {index}"
-    reference = build_gear(gear, 16)
-    # A volume regression check, not a global bound on involute flank deviation.
-    assert isclose(solid.Volume(), reference.Volume(), rel_tol=1e-5)
-    assert isclose(solid.BoundingBox().zlen, 16, abs_tol=1e-5)
-    assert isclose(solid.Center().x, 0 if index == 0 else 72, abs_tol=1e-5)
-    assert any(face.geomType() == "CYLINDER" for face in solid.Faces()), "Missing bore"
+volumes = []
+for rounding, filename in ((0, "gear-pair-approximate.stp"), (1, "gear-pair-rounded.stp")):
+    result = analyze(Design(root_fillet=rounding))
+    path = Path("output/samples") / filename
+    assert b"ISO-10303-21" in path.read_bytes(), "Not a STEP file"
+    solids = cq.importers.importStep(str(path)).solids().vals()
+    assert len(solids) == 2, "STEP must contain both gears"
+    variant_volumes = []
+    for index, (solid, gear) in enumerate(zip(solids, result["gears"])):
+        assert solid.isValid(), f"Invalid solid {index}"
+        reference = build_gear(gear, 16)
+        # A regression check, not a global bound on involute flank deviation.
+        assert isclose(solid.Volume(), reference.Volume(), rel_tol=1e-5)
+        assert isclose(solid.BoundingBox().zlen, 16, abs_tol=1e-5)
+        assert isclose(solid.Center().x, 0 if index == 0 else 72, abs_tol=1e-5)
+        assert any(face.geomType() == "CYLINDER" for face in solid.Faces()), "Missing bore"
+        variant_volumes.append(solid.Volume())
+    volumes.append(variant_volumes)
+assert all(rounded > sharp for sharp, rounded in zip(*volumes)), "Root blends must add material"
+
+svg = ET.parse("output/drawings/gear-1-dimensioned-tooth.svg").getroot()
+assert svg.tag == "{http://www.w3.org/2000/svg}svg"
+assert all(isfinite(float(n)) for n in svg.attrib["viewBox"].split()), "Nonfinite SVG"
+drawing_text = " ".join(svg.itertext())
+for required in ("KRUHOVÉ ZAOBLENIE PÄTY", "Ø d / Dr = 48", "Ø dᶠ = 43", "R päty = 0,6"):
+    assert required in drawing_text, f"SVG missing {required}"
 
 pdf = PdfReader("output/pdf/gear-report.pdf")
 assert len(pdf.pages) == 1
@@ -41,5 +55,5 @@ for required in (
 ):
     assert required in text, f"PDF missing {required}"
 print(
-    "Browser exports verified: two valid STEP solids, bores, dimensions, volumes and PDF content."
+    "Browser exports verified: both root variants, valid STEP solids, bores, volumes, dimensioned SVG and PDF."
 )

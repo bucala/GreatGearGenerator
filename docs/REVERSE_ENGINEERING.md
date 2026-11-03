@@ -19,6 +19,8 @@ Pri prenose samostatného kolesa sa vytvorí **hypotetické** druhé koleso so 4
 
 Nezmerané otvory sa pri prenose nastavia na nulu, šírka na 16 mm. Materiál a zaťaženie sa nastavia na predvolené hodnoty aplikácie. PDF po prenose opisuje aktuálny návrh; neobsahuje protokol pôvodných meraní a rezíduí.
 
+Identifikácia neurčuje polomer zaoblenia z reálneho skenu. Prenesený kandidát začína bez zaoblenia; v návrhu možno následne zvoliť navrhovaný kruhový prechod ako konštrukčnú úpravu.
+
 ## Výpočtový model
 
 Rovnaké predpoklady ako pri priamom návrhu: vonkajšie čelné evolventné ozubenie, `ha*=1`, `hf*=1,25`, bez vôle, opotrebenia, trochoidnej päty a samostatnej výrobnej úpravy hlavy.

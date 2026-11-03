@@ -23,6 +23,7 @@ import { defaults, type Analysis, type Design } from './types';
 import Sketch from './Sketch';
 import ReverseEngineering from './ReverseEngineering';
 import { version } from '../package.json';
+import ToothDetail from './ToothDetail';
 
 const Scene = lazy(() => import('./Scene'));
 type Draft = Record<keyof Design, string>;
@@ -275,6 +276,36 @@ export default function App() {
               <h2>Parametre návrhu</h2>
               <span className="tag">mm</span>
             </div>
+            <fieldset className="model-selection">
+              <legend>Model päty zuba</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="root-model"
+                  checked={draft.root_fillet === '0'}
+                  onChange={() => set('root_fillet', '0')}
+                />{' '}
+                Bez zaoblenia
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="root-model"
+                  checked={draft.root_fillet === '1'}
+                  onChange={() => set('root_fillet', '1')}
+                />{' '}
+                S navrhovaným zaoblením
+              </label>
+              <p className="hint">
+                Kruhový prechod v päte, návrh R ≤ 0,3 m. Netýka sa hrán po šírke ani hlavy zuba.
+              </p>
+              {fresh && (
+                <p className="hint">
+                  R₁ = {fmt(result.gears[0].root_fillet?.radius ?? 0, 3)} mm · R₂ ={' '}
+                  {fmt(result.gears[1].root_fillet?.radius ?? 0, 3)} mm
+                </p>
+              )}
+            </fieldset>
             <div className="section-label">
               <span>01</span> ZÁKLADNÁ GEOMETRIA
             </div>
@@ -486,6 +517,7 @@ export default function App() {
                 </span>
               </div>
             </div>
+            {fresh && result && <ToothDetail result={result} />}
             <div className="metrics">
               <div className="panel metric">
                 <span>
@@ -641,7 +673,7 @@ export default function App() {
                   checked={approximate}
                   onChange={(e) => setApproximate(e.target.checked)}
                 />
-                <span>Povoliť návrhový STEP s B-spline aproximáciou a radiálnou pätou.</span>
+                <span>Povoliť návrhový STEP s B-spline aproximáciou a zvoleným modelom päty.</span>
               </label>
               <button
                 className="primary"
@@ -663,7 +695,7 @@ export default function App() {
               </button>
               <p className="hint">
                 Exaktný STEP bez aproximácie nie je podporovaný. Náhľad ani export nemodelujú
-                výrobnú trochoidu.
+                výrobnú trochoidu; kruhové zaoblenie je navrhovaná konštrukčná úprava.
               </p>
               {exportError && (
                 <p className="error" role="alert">

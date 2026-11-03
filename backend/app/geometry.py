@@ -7,6 +7,7 @@ See docs/ENGINEERING.md for equations, assumptions and limits of every check.
 from math import atan, cos, degrees, hypot, pi, radians, sin, sqrt, tan
 
 from .models import Design
+from .profile import proposed_fillet, rounded_outline
 
 
 def involute(t: float, rb: float) -> tuple[float, float]:
@@ -71,7 +72,9 @@ def outline(g: dict, samples: int = 14) -> list[tuple[float, float]]:
     ]
 
 
-def gear(m: float, z: int, alpha: float, x: float, k: float, bore: float) -> dict:
+def gear(
+    m: float, z: int, alpha: float, x: float, k: float, bore: float, rounding: bool = False
+) -> dict:
     d = m * z
     db = d * cos(alpha)
     da = m * (z + 2 + 2 * x - 2 * k)
@@ -88,6 +91,7 @@ def gear(m: float, z: int, alpha: float, x: float, k: float, bore: float) -> dic
     if half_tip <= 1e-5 or half_root >= pi / z:
         raise ValueError("Korekcia vytvára špicatý zub alebo prekrývajúce sa päty zubov.")
     g = {
+        "root_fillet": None,
         "teeth": z,
         "profile_shift": x,
         "pitch_diameter": d,
@@ -102,7 +106,9 @@ def gear(m: float, z: int, alpha: float, x: float, k: float, bore: float) -> dic
         "undercut": z < 2 * (1 - x) / sin(alpha) ** 2 - 1e-10,
         "tip_thickness": da * half_tip,
     }
-    g["outline"] = outline(g)
+    if rounding:
+        g["root_fillet"] = proposed_fillet(g, m)
+    g["outline"] = rounded_outline(g) if rounding else outline(g)
     return g
 
 
@@ -116,7 +122,7 @@ def analyze(p: Design) -> dict:
     y = (a - a0) / p.module
     k = xsum - y
     gears = [
-        gear(p.module, z, alpha, x, k, bore)
+        gear(p.module, z, alpha, x, k, bore, bool(p.root_fillet))
         for z, x, bore in ((p.teeth1, p.profile1, p.bore1), (p.teeth2, p.profile2, p.bore2))
     ]
     g1, g2 = gears
@@ -126,8 +132,8 @@ def analyze(p: Design) -> dict:
     span = a * sin(aw)
     contact_ratio = (q1 + q2 - span) / (pi * p.module * cos(alpha))
     # End of each active involute must remain above the partner's involute start.
-    start1 = sqrt(max(0, (max(rb1, g1["root_diameter"] / 2)) ** 2 - rb1**2))
-    start2 = sqrt(max(0, (max(rb2, g2["root_diameter"] / 2)) ** 2 - rb2**2))
+    start1 = rb1 * (g1["root_fillet"]["t"] if g1["root_fillet"] else g1["t_start"])
+    start2 = rb2 * (g2["root_fillet"]["t"] if g2["root_fillet"] else g2["t_start"])
     interference = q1 > span - start2 + 1e-8 or q2 > span - start1 + 1e-8
     rw1, rw2 = a * p.teeth1 / (p.teeth1 + p.teeth2), a * p.teeth2 / (p.teeth1 + p.teeth2)
     ft = p.torque * 1000 / rw1  # N m -> N mm; force at working pitch circle.
@@ -158,7 +164,9 @@ def analyze(p: Design) -> dict:
         {
             "name": "Evolventná interferencia",
             "ok": not interference,
-            "detail": "Kontrola aktívnej dráhy záberu",
+            "detail": "Aktívny bok nad navrhovaným zaoblením päty"
+            if p.root_fillet
+            else "Kontrola aktívnej dráhy záberu",
         },
         {
             "name": "Trvalý záber",
@@ -188,7 +196,9 @@ def analyze(p: Design) -> dict:
         "geometry_ok": all(c["ok"] for c in checks),
         "limitations": [
             "Predbežný výpočet; nejde o overenie podľa ISO 6336 ani DIN 3990.",
-            "Päty sú radiálne prechody bez generovanej trochoidy a zaoblenia.",
+            "Navrhované kruhové zaoblenia päty nie sú výrobná trochoida; pevnostný účinok nie je overený."
+            if p.root_fillet
+            else "Päty sú radiálne prechody bez generovanej trochoidy a zaoblenia.",
             "Napätia sú odhady bez dynamických faktorov a bezpečnostného súčiniteľa.",
             "STEP bez aproximácie nie je týmto CAD jadrom podporovaný.",
         ],

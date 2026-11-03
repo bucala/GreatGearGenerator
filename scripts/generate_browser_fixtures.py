@@ -20,6 +20,11 @@ cases = [
     ("small-module-zero-load", {"module": 0.2, "bore1": 0, "bore2": 0, "torque": 0}),
     ("30-degrees", {"pressure_angle": 30}),
     ("opposite-shifts", {"profile1": 0.2, "profile2": -0.2}),
+    ("circular-root-blends", {"root_fillet": 1}),
+    (
+        "large-rounded-roots",
+        {"root_fillet": 1, "teeth1": 80, "teeth2": 120, "bore1": 0, "bore2": 0},
+    ),
 ]
 fixtures = []
 for name, values in cases:

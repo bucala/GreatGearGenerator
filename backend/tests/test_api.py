@@ -32,6 +32,8 @@ def test_health_and_default_analysis():
         {"bore1": 100},
         {"poisson_ratio": 0.5},
         {"module": "NaN"},
+        {"root_fillet": 2},
+        {"root_fillet": 0.5},
         {"torque": "Infinity"},
     ],
 )

@@ -53,6 +53,13 @@ def report(result: dict) -> bytes:
         ("tip_thickness", "Tip tooth thickness [mm]"),
     ]:
         rows.append([name] + [f"{g[key]:.3f}" for g in result["gears"]])
+    rows.append(
+        ["Proposed root radius [mm]"]
+        + [
+            f"{g['root_fillet']['radius']:.3f}" if g.get("root_fillet") else "0.000"
+            for g in result["gears"]
+        ]
+    )
     table = Table(rows, colWidths=[86 * mm, 44 * mm, 44 * mm])
     table.setStyle(
         TableStyle(
@@ -106,7 +113,9 @@ def report(result: dict) -> bytes:
     para(
         "Analytic involute flank equations; preview is sampled. Approximate STEP uses interpolated "
         "B-splines through 65 points per flank (no certified global error bound). Exact involute "
-        "STEP is unsupported. Root transitions are radial, without rack-generated trochoids or fillets. "
+        "STEP is unsupported. Root transitions are radial or tangent circular design blends, "
+        "starting at R=0.3m and limited by geometry. They are not rack-generated trochoids; "
+        "root blend strength benefits are not evaluated. "
         "No ISO 6336 / DIN 3990 certification, material allowables, fatigue, dynamic factors, "
         "backlash or safety factors are evaluated. Undercut geometry is not simulated. "
         "PASS refers only to the listed preliminary geometric checks."

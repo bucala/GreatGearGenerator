@@ -48,6 +48,10 @@ export function createReport(r: Analysis): Blob {
     ['tip_thickness', 'Tip tooth thickness [mm]'],
   ] as const)
     rows.push([name, ...r.gears.map((g) => g[key].toFixed(3))]);
+  rows.push([
+    'Proposed root radius [mm]',
+    ...r.gears.map((g) => (g.root_fillet?.radius ?? 0).toFixed(3)),
+  ]);
   rows.forEach((row, i) => {
     if (i === 0) doc.setFillColor(24, 60, 65);
     else if (i % 2) doc.setFillColor(237, 244, 243);
@@ -83,7 +87,7 @@ export function createReport(r: Analysis): Blob {
   );
   heading('Scope and limitations');
   paragraph(
-    'Analytic involute equations; sampled preview. Browser STEP uses B-spline approximation of 65 analytic samples per flank, circular tip/root arcs and radial root transitions. No certified global deviation bound. Exact involute STEP, rack-generated trochoids and fillets are unsupported. No ISO 6336 / DIN 3990 certification, fatigue, dynamics, material allowables or safety factors. PASS refers only to the listed geometric checks.',
+    'Analytic involute equations; sampled preview. Browser STEP uses B-spline approximation of 65 analytic samples per flank, circular tip/root arcs and optional tangent circular root blends. R starts at 0.3m and is limited by geometry. No certified global deviation bound. Exact involute STEP and rack-generated trochoids are unsupported. Root blend strength benefits are not evaluated. No ISO 6336 / DIN 3990 certification, fatigue, dynamics, material allowables or safety factors. PASS refers only to the listed geometric checks.',
     8,
   );
   paragraph(

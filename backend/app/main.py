@@ -13,7 +13,7 @@ from .geometry import analyze
 from .models import Design, StepRequest
 from .report import report
 
-app = FastAPI(title="Great Gear Generator", version="0.1.0")
+app = FastAPI(title="Great Gear Generator", version="0.3.0")
 cad_lock = threading.Lock()
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,9 @@ def generate_step(p: StepRequest):
             media_type="application/step",
             headers={
                 "Content-Disposition": 'attachment; filename="gear-pair-approximate.stp"',
-                "X-Geometry-Mode": "approximate-bspline-radial-root",
+                "X-Geometry-Mode": "approximate-bspline-circular-root"
+                if p.root_fillet
+                else "approximate-bspline-radial-root",
             },
         )
     except Exception as exc:

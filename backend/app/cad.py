@@ -1,54 +1,30 @@
 """Explicitly opt-in, approximate design STEP, never advertised as exact involute CAD."""
 
-from math import atan, pi
 from pathlib import Path
 
 import cadquery as cq
 
-from .geometry import flank, polar
+from .profile import segment_point, segments
 
 
 def build_gear(g: dict, width: float) -> cq.Solid:
     edges = []
-    rf, ra = g["root_diameter"] / 2, g["tip_diameter"] / 2
-    t0, t1 = g["t_start"], g["t_end"]
-    h0 = g["base_half_angle"] - (t0 - atan(t0))
-    h1 = g["base_half_angle"] - (t1 - atan(t1))
-    pitch = 2 * pi / g["teeth"]
 
     def vector(p):
         return cq.Vector(p[0], p[1], 0)
 
-    def line(a, b):
-        if (vector(a) - vector(b)).Length > 1e-8:
-            edges.append(cq.Edge.makeLine(vector(a), vector(b)))
+    for edge in segments(g):
 
-    def arc(radius, a, b):
-        edges.append(
-            cq.Edge.makeThreePointArc(
-                vector(polar(radius, a)),
-                vector(polar(radius, (a + b) / 2)),
-                vector(polar(radius, b)),
-            )
-        )
+        def at(u, edge=edge):
+            return vector(segment_point(g, edge, u))
 
-    for i in range(g["teeth"]):
-        a = i * pitch
-        line(polar(rf, a - h0), flank(g, a, -1, t0))
-        # Interpolation through analytic points. No certified global deviation bound.
-        edges.append(
-            cq.Edge.makeSpline(
-                [vector(flank(g, a, -1, t0 + (t1 - t0) * j / 64)) for j in range(65)], tol=1e-8
-            )
-        )
-        arc(ra, a - h1, a + h1)
-        edges.append(
-            cq.Edge.makeSpline(
-                [vector(flank(g, a, 1, t1 - (t1 - t0) * j / 64)) for j in range(65)], tol=1e-8
-            )
-        )
-        line(flank(g, a, 1, t0), polar(rf, a + h0))
-        arc(rf, a + h0, a + pitch - h0)
+        if edge["kind"] == "line":
+            edges.append(cq.Edge.makeLine(at(0), at(1)))
+        elif edge["kind"] == "arc":
+            edges.append(cq.Edge.makeThreePointArc(at(0), at(0.5), at(1)))
+        else:
+            # Interpolate 65 points; no certified global involute deviation bound.
+            edges.append(cq.Edge.makeSpline([at(j / 64) for j in range(65)], tol=1e-8))
     wire = cq.Wire.assembleEdges(edges)
     holes = (
         [cq.Wire.makeCircle(g["bore"] / 2, cq.Vector(), cq.Vector(0, 0, 1))] if g["bore"] else []
