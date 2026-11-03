@@ -720,7 +720,7 @@ export default function App() {
                 onClick={() => exportFile('step')}
               >
                 <Box size={17} />
-                {busy === 'step' ? exportProgress || 'Generujem STEP…' : 'Stiahnuť STEP'}
+                {busy === 'step' ? exportProgress || 'Generujem STEP…' : cadBusy ? 'Počítam 3D zaoblenia…' : 'Stiahnuť STEP'}
                 <span>.stp</span>
               </button>
               <button

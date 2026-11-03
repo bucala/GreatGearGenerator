@@ -10,11 +10,14 @@ test('all three blends use a CAD mesh and the same STEP solid', async ({ page })
   const drawing = page.getByRole('img', { name: /Geometricky kótovaný zub/ });
   await expect(drawing).toContainText('R hlavy = 0,2');
   await expect(drawing).toContainText('R šírky = 0,1');
-  const pending = page.getByText('Vytváram CAD náhľad zaoblenia hrán…', { exact: true });
-  await expect(pending).toBeVisible();
+  const cad = page.locator('[data-cad-model="face"]');
+  await expect(cad).toBeVisible();
   await page.getByLabel('Povoliť návrhový STEP', { exact: false }).check();
-  await expect(page.getByRole('button', { name: /Stiahnuť STEP/ })).toBeDisabled();
-  await expect(pending).not.toBeVisible({ timeout: 305000 });
+  await expect
+    .poll(() => cad.getAttribute('data-cad-state'), { timeout: 305000 })
+    .toMatch(/ready|error/);
+  const diagnostic = await page.getByRole('alert').allTextContents();
+  expect(await cad.getAttribute('data-cad-state'), diagnostic.join('; ')).toBe('ready');
   await expect(page.getByRole('alert')).not.toBeVisible();
   await page.screenshot({ path: '../output/screenshots/all-three-blends.png', fullPage: true });
   const download = page.waitForEvent('download');

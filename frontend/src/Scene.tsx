@@ -104,57 +104,63 @@ export default function Scene({
   const extent = a + (result.gears[0].tip_diameter + result.gears[1].tip_diameter) / 2;
   const scale = 120 / extent;
   return (
-    <Canvas
-      frameloop={animate && ready ? 'always' : 'demand'}
-      camera={{ position: [82, 105, 115], fov: 40 }}
-      aria-label="Interaktívny 3D náhľad súkolesia"
+    <div
+      className="scene-host"
+      data-cad-model={face ? 'face' : 'extrusion'}
+      data-cad-state={ready ? 'ready' : error ? 'error' : 'pending'}
     >
-      <ambientLight intensity={1.7} />
-      <directionalLight position={[20, 100, 50]} intensity={3} />
-      <directionalLight position={[-70, 30, -30]} intensity={2} color="#75d9e8" />
-      {!ready && (
-        <Html center>
-          <div className="cad-preview-message" role={error ? 'alert' : 'status'}>
-            {error || 'Vytváram CAD náhľad zaoblenia hrán…'}
-          </div>
-        </Html>
-      )}
-      {ready && (
-        <group rotation={[-Math.PI / 2, 0, 0]} scale={scale}>
-          <GearMesh
-            gear={result.gears[0]}
-            width={result.parameters.width}
-            x={-a / 2}
-            phase={0}
-            speed={0.22}
-            animate={animate}
-            color="#e2ad58"
-            cad={face ? cad!.meshes[0] : undefined}
-          />
-          <GearMesh
-            gear={result.gears[1]}
-            width={result.parameters.width}
-            x={a / 2}
-            phase={Math.PI - Math.PI / result.gears[1].teeth}
-            speed={-0.22 / result.ratio}
-            animate={animate}
-            color="#74b8b9"
-            cad={face ? cad!.meshes[1] : undefined}
-          />
-        </group>
-      )}
-      <Grid
-        position={[0, (-result.parameters.width * scale) / 2 - 0.3, 0]}
-        args={[250, 250]}
-        cellSize={10}
-        cellThickness={0.45}
-        cellColor="#33505a"
-        sectionSize={50}
-        sectionColor="#49666e"
-        fadeDistance={280}
-        infiniteGrid
-      />
-      <OrbitControls makeDefault minDistance={35} maxDistance={400} />
-    </Canvas>
+      <Canvas
+        frameloop={animate && ready ? 'always' : 'demand'}
+        camera={{ position: [82, 105, 115], fov: 40 }}
+        aria-label="Interaktívny 3D náhľad súkolesia"
+      >
+        <ambientLight intensity={1.7} />
+        <directionalLight position={[20, 100, 50]} intensity={3} />
+        <directionalLight position={[-70, 30, -30]} intensity={2} color="#75d9e8" />
+        {!ready && (
+          <Html center>
+            <div className="cad-preview-message" role={error ? 'alert' : 'status'}>
+              {error || 'Vytváram CAD náhľad zaoblenia hrán…'}
+            </div>
+          </Html>
+        )}
+        {ready && (
+          <group rotation={[-Math.PI / 2, 0, 0]} scale={scale}>
+            <GearMesh
+              gear={result.gears[0]}
+              width={result.parameters.width}
+              x={-a / 2}
+              phase={0}
+              speed={0.22}
+              animate={animate}
+              color="#e2ad58"
+              cad={face ? cad!.meshes[0] : undefined}
+            />
+            <GearMesh
+              gear={result.gears[1]}
+              width={result.parameters.width}
+              x={a / 2}
+              phase={Math.PI - Math.PI / result.gears[1].teeth}
+              speed={-0.22 / result.ratio}
+              animate={animate}
+              color="#74b8b9"
+              cad={face ? cad!.meshes[1] : undefined}
+            />
+          </group>
+        )}
+        <Grid
+          position={[0, (-result.parameters.width * scale) / 2 - 0.3, 0]}
+          args={[250, 250]}
+          cellSize={10}
+          cellThickness={0.45}
+          cellColor="#33505a"
+          sectionSize={50}
+          sectionColor="#49666e"
+          fadeDistance={280}
+          infiniteGrid
+        />
+        <OrbitControls makeDefault minDistance={35} maxDistance={400} />
+      </Canvas>
+    </div>
   );
 }

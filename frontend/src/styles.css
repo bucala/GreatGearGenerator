@@ -1084,7 +1084,16 @@ h1 > span {
   border: 1px solid var(--line);
   border-radius: 7px;
 }
-.cad-preview-message { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 18px; width: 280px; font-size: 13px; line-height: 1.6; }
+.cad-preview-message {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  width: 280px;
+  font-size: 13px;
+  line-height: 1.6;
+}
 .model-selection legend {
   color: var(--muted);
   font-size: 11px;
@@ -1169,4 +1178,9 @@ h1 > span {
   border-radius: 8px;
   color: var(--accent);
   background: var(--surface);
+}
+
+.scene-host {
+  width: 100%;
+  height: 100%;
 }
