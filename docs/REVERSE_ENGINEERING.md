@@ -1,6 +1,8 @@
 # Reverzný návrh z rozmerov skenu
 
-V rozhraní rozbaľte **Reverzný návrh zo skenu**. Funkcia funguje aj na statickom hostingu, lokálne v prehliadači. Neimportuje STL ani mračno bodov: vstupy sú už namerané rozmery v mm.
+Predvolene sa otvorí režim **Z nameraného kusu**. **Modul sa nezadáva; je výsledkom identifikácie.** Začnite známym počtom zubov a nameranými priemermi. Pole pre vopred známy modul je skryté v rozšírených nastaveniach a bežne zostáva prázdne. Režim **Návrh z parametrov** je priamy návrh so známym modulom; výber kandidáta ho otvorí s vypočítanými hodnotami. Prepínanie režimov zachová rozpracované merania.
+
+Funkcia funguje aj na statickom hostingu, lokálne v prehliadači. Neimportuje STL ani mračno bodov: vstupy sú už namerané rozmery v mm.
 
 ## Postup
 

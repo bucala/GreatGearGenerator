@@ -8,6 +8,7 @@ test('static hosting: design, 3D, 2D, validation, themes and real exports', asyn
   });
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
+  await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await expect(page.locator('canvas')).toBeVisible();
   await page.getByRole('button', { name: 'Spustiť animáciu' }).click();
@@ -48,6 +49,7 @@ test('static hosting: design, 3D, 2D, validation, themes and real exports', asyn
 test('mobile layout fits and invalid inputs are rejected without a server', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
+  await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await page.getByRole('button', { name: '2D náčrt' }).click();
   const overflow = await page.evaluate(
@@ -61,6 +63,7 @@ test('mobile layout fits and invalid inputs are rejected without a server', asyn
 
 test('failed WASM download reports an error and allows a retry', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await page.getByLabel('Povoliť návrhový STEP', { exact: false }).check();
   await page.route('**/*.wasm', (route) => route.abort());

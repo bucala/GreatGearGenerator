@@ -899,8 +899,7 @@ h1 > span {
 .reverse-panel {
   margin-bottom: 22px;
 }
-.reverse-panel > summary {
-  cursor: pointer;
+.reverse-heading {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -908,15 +907,7 @@ h1 > span {
   font-size: 14px;
   color: var(--accent);
 }
-.reverse-panel > summary::after {
-  content: '+';
-  margin-left: auto;
-  font-size: 22px;
-}
-.reverse-panel[open] > summary::after {
-  content: '−';
-}
-.reverse-panel > summary small {
+.reverse-heading small {
   display: block;
   color: var(--muted);
   font-size: 11px;
@@ -1067,7 +1058,7 @@ h1 > span {
   .reverse-body {
     padding: 15px;
   }
-  .reverse-panel > summary {
+  .reverse-heading {
     padding: 16px;
   }
   .reverse-fields {
@@ -1080,4 +1071,32 @@ h1 > span {
     width: 100%;
     justify-content: center;
   }
+}
+.workflow-tabs {
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.reverse-advanced {
+  margin-top: 16px;
+}
+.reverse-advanced > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+}
+.reverse-advanced .field {
+  margin-top: 14px;
+}
+.reverse-module-result,
+.identified-module {
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 15px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--surface);
 }

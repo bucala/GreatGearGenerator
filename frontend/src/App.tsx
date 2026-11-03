@@ -109,6 +109,8 @@ function Field({
 }
 
 export default function App() {
+  const [workflow, setWorkflow] = useState<'reverse' | 'design'>('reverse');
+  const [identifiedModule, setIdentifiedModule] = useState<number | null>(null);
   const [draft, setDraft] = useState<Draft>(initialDraft);
   const [result, setResult] = useState<Analysis | null>(null);
   const [error, setError] = useState('');
@@ -122,7 +124,10 @@ export default function App() {
   const design = useMemo(() => parseDraft(draft), [draft]);
   const fresh =
     !!result && !!design && JSON.stringify(result.parameters) === JSON.stringify(design);
-  const set = (key: keyof Design, value: string) => setDraft((d) => ({ ...d, [key]: value }));
+  const set = (key: keyof Design, value: string) => {
+    setIdentifiedModule(null);
+    setDraft((d) => ({ ...d, [key]: value }));
+  };
 
   useEffect(() => {
     document.documentElement.dataset.theme = light ? 'light' : 'dark';
@@ -200,425 +205,473 @@ export default function App() {
             NÁVRH PREVODOV <ChevronRight size={12} /> ČELNÉ OZUBENIE
           </div>
           <h1>
-            Od parametrov k súkolesiu<span>.</span>
+            {workflow === 'reverse' ? 'Od merania k ozubeniu' : 'Od parametrov k súkolesiu'}
+            <span>.</span>
           </h1>
-          <p>Navrhnite, preskúmajte a overte geometriu vášho prevodu.</p>
+          <p>
+            {workflow === 'reverse'
+              ? 'Modul nemusíte poznať. Hľadáme ho z rozmerov reálneho kolesa.'
+              : 'Navrhnite, preskúmajte a overte geometriu vášho prevodu.'}
+          </p>
         </div>
+        {workflow === 'design' && (
+          <button
+            className="secondary reset"
+            onClick={() => {
+              setDraft(initialDraft);
+              setApproximate(false);
+              setAnimate(false);
+              setIdentifiedModule(null);
+            }}
+          >
+            <RotateCcw size={15} /> Obnoviť návrh
+          </button>
+        )}
+      </div>
+      <div className="workflow-tabs mode-tabs" role="group" aria-label="Spôsob návrhu">
         <button
-          className="secondary reset"
-          onClick={() => {
-            setDraft(initialDraft);
-            setApproximate(false);
-            setAnimate(false);
-          }}
+          type="button"
+          aria-pressed={workflow === 'reverse'}
+          className={workflow === 'reverse' ? 'active' : ''}
+          onClick={() => setWorkflow('reverse')}
         >
-          <RotateCcw size={15} /> Obnoviť návrh
+          Z nameraného kusu
+        </button>
+        <button
+          type="button"
+          aria-pressed={workflow === 'design'}
+          className={workflow === 'design' ? 'active' : ''}
+          onClick={() => setWorkflow('design')}
+        >
+          Návrh z parametrov
         </button>
       </div>
-      <ReverseEngineering
-        onApply={(design) => {
-          setDraft(
-            Object.fromEntries(Object.entries(design).map(([k, v]) => [k, String(v)])) as Draft,
-          );
-          setApproximate(false);
-          setAnimate(false);
-        }}
-      />
-      <main className="workspace">
-        <aside className="panel parameters">
-          <div className="panel-title">
-            <Settings2 size={17} />
-            <h2>Parametre návrhu</h2>
-            <span className="tag">mm</span>
-          </div>
-          <div className="section-label">
-            <span>01</span> ZÁKLADNÁ GEOMETRIA
-          </div>
-          <div className="fields">
-            {f({
-              name: 'module',
-              label: 'Modul',
-              symbol: 'm',
-              unit: 'mm',
-              min: 0.2,
-              max: 10,
-              step: 0.1,
-              slider: true,
-            })}
-            <div className="two-col">
-              {f({
-                name: 'pressure_angle',
-                label: 'Uhol záberu',
-                symbol: 'α',
-                unit: '°',
-                min: 14.5,
-                max: 30,
-                step: 0.5,
-              })}
-              {f({
-                name: 'width',
-                label: 'Šírka ozubenia',
-                symbol: 'b',
-                unit: 'mm',
-                min: 1,
-                max: 100,
-                step: 0.5,
-              })}
+      {workflow === 'design' && identifiedModule !== null && (
+        <p className="identified-module" role="status">
+          Prenesený kandidát: modul m = {fmt(identifiedModule, 4)} mm. Hodnota pochádza z
+          identifikácie; overte aj ostatné geometrické kontroly.
+        </p>
+      )}
+      <div hidden={workflow !== 'reverse'}>
+        <ReverseEngineering
+          onApply={(design) => {
+            setDraft(
+              Object.fromEntries(Object.entries(design).map(([k, v]) => [k, String(v)])) as Draft,
+            );
+            setApproximate(false);
+            setAnimate(false);
+            setIdentifiedModule(design.module);
+            setWorkflow('design');
+          }}
+        />
+      </div>
+      {workflow === 'design' && (
+        <main className="workspace">
+          <aside className="panel parameters">
+            <div className="panel-title">
+              <Settings2 size={17} />
+              <h2>Parametre návrhu</h2>
+              <span className="tag">mm</span>
             </div>
-          </div>
-          <div className="gear-label">
-            <span className="swatch amber" />
-            <h3>Pastorok</h3>
-            <span>HNACÍ ČLEN</span>
-          </div>
-          <div className="fields">
-            {f({
-              name: 'teeth1',
-              label: 'Počet zubov',
-              symbol: 'z₁',
-              min: 8,
-              max: 120,
-              slider: true,
-            })}
-            <div className="two-col">
-              {f({
-                name: 'profile1',
-                label: 'Korekcia',
-                symbol: 'x₁',
-                min: -0.5,
-                max: 0.8,
-                step: 0.05,
-              })}
-              {f({
-                name: 'bore1',
-                label: 'Otvor',
-                symbol: 'Ø',
-                unit: 'mm',
-                min: 0,
-                max: 300,
-                step: 0.5,
-              })}
+            <div className="section-label">
+              <span>01</span> ZÁKLADNÁ GEOMETRIA
             </div>
-          </div>
-          <div className="gear-label">
-            <span className="swatch teal" />
-            <h3>Koleso</h3>
-            <span>HNANÝ ČLEN</span>
-          </div>
-          <div className="fields">
-            {f({
-              name: 'teeth2',
-              label: 'Počet zubov',
-              symbol: 'z₂',
-              min: 8,
-              max: 120,
-              slider: true,
-            })}
-            <div className="two-col">
+            <div className="fields">
               {f({
-                name: 'profile2',
-                label: 'Korekcia',
-                symbol: 'x₂',
-                min: -0.5,
-                max: 0.8,
-                step: 0.05,
-              })}
-              {f({
-                name: 'bore2',
-                label: 'Otvor',
-                symbol: 'Ø',
+                name: 'module',
+                label: 'Modul',
+                symbol: 'm',
                 unit: 'mm',
-                min: 0,
-                max: 300,
-                step: 0.5,
-              })}
-            </div>
-          </div>
-          <details className="loads">
-            <summary>
-              <Activity size={15} /> Zaťaženie a materiál <ChevronRight size={14} />
-            </summary>
-            <div className="fields two-col">
-              {f({
-                name: 'torque',
-                label: 'Moment',
-                symbol: 'T₁',
-                unit: 'N·m',
-                min: 0,
-                max: 10000,
+                min: 0.2,
+                max: 10,
                 step: 0.1,
+                slider: true,
               })}
-              {f({ name: 'rpm', label: 'Otáčky', symbol: 'n₁', unit: 'min⁻¹', min: 0, max: 30000 })}
-              {f({
-                name: 'elastic_modulus',
-                label: 'Modul pružnosti',
-                symbol: 'E',
-                unit: 'MPa',
-                min: 100,
-                max: 500000,
-              })}
-              {f({
-                name: 'poisson_ratio',
-                label: 'Poissonovo číslo',
-                symbol: 'ν',
-                min: 0,
-                max: 0.49,
-                step: 0.01,
-              })}
-            </div>
-            <p className="hint">
-              Rovnaký materiál oboch kolies. Predvolené hodnoty zodpovedajú oceli.
-            </p>
-          </details>
-        </aside>
-        <section className="center-column">
-          <div className="panel viewer-panel">
-            <div className="viewer-toolbar">
-              <div className="mode-tabs" role="group" aria-label="Režim náhľadu">
-                <button className={mode === '3d' ? 'active' : ''} onClick={() => setMode('3d')}>
-                  <Box size={15} /> 3D model
-                </button>
-                <button className={mode === '2d' ? 'active' : ''} onClick={() => setMode('2d')}>
-                  <Ruler size={15} /> 2D náčrt
-                </button>
+              <div className="two-col">
+                {f({
+                  name: 'pressure_angle',
+                  label: 'Uhol záberu',
+                  symbol: 'α',
+                  unit: '°',
+                  min: 14.5,
+                  max: 30,
+                  step: 0.5,
+                })}
+                {f({
+                  name: 'width',
+                  label: 'Šírka ozubenia',
+                  symbol: 'b',
+                  unit: 'mm',
+                  min: 1,
+                  max: 100,
+                  step: 0.5,
+                })}
               </div>
-              <span className="viewer-tag">
-                <span className="tiny-dot" /> NÁVRHOVÝ NÁHĽAD
-              </span>
             </div>
-            <div className="viewer">
-              {result && (
-                <>
-                  {mode === '2d' ? (
-                    <Sketch result={result} />
-                  ) : (
-                    <ViewerBoundary>
-                      <Suspense
-                        fallback={<div className="viewer-message">Načítavam 3D náhľad…</div>}
-                      >
-                        <Scene result={result} animate={animate && fresh} />
-                      </Suspense>
-                    </ViewerBoundary>
-                  )}
-                </>
-              )}
-              {!fresh && (
-                <div className={`viewer-message overlay ${error ? 'has-error' : ''}`} role="status">
-                  {error || 'Prepočítavam geometriu…'}
+            <div className="gear-label">
+              <span className="swatch amber" />
+              <h3>Pastorok</h3>
+              <span>HNACÍ ČLEN</span>
+            </div>
+            <div className="fields">
+              {f({
+                name: 'teeth1',
+                label: 'Počet zubov',
+                symbol: 'z₁',
+                min: 8,
+                max: 120,
+                slider: true,
+              })}
+              <div className="two-col">
+                {f({
+                  name: 'profile1',
+                  label: 'Korekcia',
+                  symbol: 'x₁',
+                  min: -0.5,
+                  max: 0.8,
+                  step: 0.05,
+                })}
+                {f({
+                  name: 'bore1',
+                  label: 'Otvor',
+                  symbol: 'Ø',
+                  unit: 'mm',
+                  min: 0,
+                  max: 300,
+                  step: 0.5,
+                })}
+              </div>
+            </div>
+            <div className="gear-label">
+              <span className="swatch teal" />
+              <h3>Koleso</h3>
+              <span>HNANÝ ČLEN</span>
+            </div>
+            <div className="fields">
+              {f({
+                name: 'teeth2',
+                label: 'Počet zubov',
+                symbol: 'z₂',
+                min: 8,
+                max: 120,
+                slider: true,
+              })}
+              <div className="two-col">
+                {f({
+                  name: 'profile2',
+                  label: 'Korekcia',
+                  symbol: 'x₂',
+                  min: -0.5,
+                  max: 0.8,
+                  step: 0.05,
+                })}
+                {f({
+                  name: 'bore2',
+                  label: 'Otvor',
+                  symbol: 'Ø',
+                  unit: 'mm',
+                  min: 0,
+                  max: 300,
+                  step: 0.5,
+                })}
+              </div>
+            </div>
+            <details className="loads">
+              <summary>
+                <Activity size={15} /> Zaťaženie a materiál <ChevronRight size={14} />
+              </summary>
+              <div className="fields two-col">
+                {f({
+                  name: 'torque',
+                  label: 'Moment',
+                  symbol: 'T₁',
+                  unit: 'N·m',
+                  min: 0,
+                  max: 10000,
+                  step: 0.1,
+                })}
+                {f({
+                  name: 'rpm',
+                  label: 'Otáčky',
+                  symbol: 'n₁',
+                  unit: 'min⁻¹',
+                  min: 0,
+                  max: 30000,
+                })}
+                {f({
+                  name: 'elastic_modulus',
+                  label: 'Modul pružnosti',
+                  symbol: 'E',
+                  unit: 'MPa',
+                  min: 100,
+                  max: 500000,
+                })}
+                {f({
+                  name: 'poisson_ratio',
+                  label: 'Poissonovo číslo',
+                  symbol: 'ν',
+                  min: 0,
+                  max: 0.49,
+                  step: 0.01,
+                })}
+              </div>
+              <p className="hint">
+                Rovnaký materiál oboch kolies. Predvolené hodnoty zodpovedajú oceli.
+              </p>
+            </details>
+          </aside>
+          <section className="center-column">
+            <div className="panel viewer-panel">
+              <div className="viewer-toolbar">
+                <div className="mode-tabs" role="group" aria-label="Režim náhľadu">
+                  <button className={mode === '3d' ? 'active' : ''} onClick={() => setMode('3d')}>
+                    <Box size={15} /> 3D model
+                  </button>
+                  <button className={mode === '2d' ? 'active' : ''} onClick={() => setMode('2d')}>
+                    <Ruler size={15} /> 2D náčrt
+                  </button>
                 </div>
-              )}
-              <div className="viewer-corner">
-                <span className="crosshair">＋</span> XY / mm
+                <span className="viewer-tag">
+                  <span className="tiny-dot" /> NÁVRHOVÝ NÁHĽAD
+                </span>
               </div>
-              {mode === '3d' && (
-                <button
-                  className="animate-button"
-                  disabled={!fresh}
-                  onClick={() => setAnimate(!animate)}
-                  aria-label={animate ? 'Zastaviť animáciu' : 'Spustiť animáciu'}
-                >
-                  {animate ? <Pause size={15} /> : <Play size={15} />}
-                </button>
-              )}
-            </div>
-            <div className="viewer-footer">
-              <div>
-                <span className="swatch amber" /> Pastorok <span className="swatch teal" /> Koleso
-              </div>
-              <span>
-                {mode === '3d'
-                  ? 'Ťahanie: otáčanie · Koliesko: priblíženie'
-                  : 'Prerušovaná: rozstupová · Bodkovaná: základná'}
-              </span>
-            </div>
-          </div>
-          <div className="metrics">
-            <div className="panel metric">
-              <span>
-                PREVODOVÝ POMER <ArrowUpRight size={14} />
-              </span>
-              <strong>
-                {fresh ? fmt(result.ratio) : '—'}
-                <small> : 1</small>
-              </strong>
-              <p>i = z₂ / z₁</p>
-            </div>
-            <div className="panel metric">
-              <span>
-                OSOVÁ VZDIALENOSŤ <Ruler size={14} />
-              </span>
-              <strong>
-                {fresh ? fmt(result.center_distance) : '—'}
-                <small> mm</small>
-              </strong>
-              <p>Pracovná vzdialenosť osí</p>
-            </div>
-            <div className="panel metric">
-              <span>
-                SÚČINITEĽ ZÁBERU <Layers3 size={14} />
-              </span>
-              <strong>
-                {fresh ? fmt(result.contact_ratio, 3) : '—'}
-                <small> εα</small>
-              </strong>
-              <p>Čelný záberový pomer</p>
-            </div>
-          </div>
-          <div className="panel dimensions">
-            <div className="panel-title">
-              <Ruler size={17} />
-              <h2>Geometrické rozmery</h2>
-              <span className="muted">Všetky rozmery v mm</span>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Priemer</th>
-                  <th>
-                    <span className="swatch amber" /> Pastorok
-                  </th>
-                  <th>
-                    <span className="swatch teal" /> Koleso
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {(
-                  [
-                    ['Rozstupový', 'd', 'pitch_diameter'],
-                    ['Základný', 'dᵦ', 'base_diameter'],
-                    ['Hlavový', 'dₐ', 'tip_diameter'],
-                    ['Pätný', 'dᶠ', 'root_diameter'],
-                  ] as const
-                ).map(([label, symbol, key]) => (
-                  <tr key={key}>
-                    <td>
-                      {label} <span className="symbol">{symbol}</span>
-                    </td>
-                    {[0, 1].map((i) => (
-                      <td key={i}>{fresh ? fmt(result.gears[i][key], 3) : '—'}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        <aside className="right-column">
-          <div className="panel analysis">
-            <div className="panel-title">
-              <Activity size={17} />
-              <h2>Analýza návrhu</h2>
-            </div>
-            <div className={`status-card ${fresh && result.geometry_ok ? 'pass' : 'attention'}`}>
-              {fresh && result.geometry_ok ? <Check size={22} /> : <CircleAlert size={22} />}
-              <div>
-                <strong>
-                  {!fresh
-                    ? 'Čaká na výpočet'
-                    : result.geometry_ok
-                      ? 'Geometrické kontroly vyhovujú'
-                      : 'Návrh vyžaduje úpravu'}
-                </strong>
-                <p>Predbežné overenie geometrie</p>
-              </div>
-            </div>
-            <div className="checks">
-              {fresh &&
-                result.checks.map((c) => (
-                  <div className="check-row" key={c.name}>
-                    {c.ok ? (
-                      <Check size={15} className="success" />
+              <div className="viewer">
+                {result && (
+                  <>
+                    {mode === '2d' ? (
+                      <Sketch result={result} />
                     ) : (
-                      <CircleAlert size={15} className="warning" />
+                      <ViewerBoundary>
+                        <Suspense
+                          fallback={<div className="viewer-message">Načítavam 3D náhľad…</div>}
+                        >
+                          <Scene result={result} animate={animate && fresh} />
+                        </Suspense>
+                      </ViewerBoundary>
                     )}
-                    <div>
-                      <strong>{c.name}</strong>
-                      <span>{c.detail}</span>
-                    </div>
+                  </>
+                )}
+                {!fresh && (
+                  <div
+                    className={`viewer-message overlay ${error ? 'has-error' : ''}`}
+                    role="status"
+                  >
+                    {error || 'Prepočítavam geometriu…'}
                   </div>
-                ))}
+                )}
+                <div className="viewer-corner">
+                  <span className="crosshair">＋</span> XY / mm
+                </div>
+                {mode === '3d' && (
+                  <button
+                    className="animate-button"
+                    disabled={!fresh}
+                    onClick={() => setAnimate(!animate)}
+                    aria-label={animate ? 'Zastaviť animáciu' : 'Spustiť animáciu'}
+                  >
+                    {animate ? <Pause size={15} /> : <Play size={15} />}
+                  </button>
+                )}
+              </div>
+              <div className="viewer-footer">
+                <div>
+                  <span className="swatch amber" /> Pastorok <span className="swatch teal" /> Koleso
+                </div>
+                <span>
+                  {mode === '3d'
+                    ? 'Ťahanie: otáčanie · Koliesko: priblíženie'
+                    : 'Prerušovaná: rozstupová · Bodkovaná: základná'}
+                </span>
+              </div>
             </div>
-            <div className="stress">
-              <div className="section-label">
-                <span>02</span> ODHAD ZAŤAŽENIA
-              </div>
-              <div>
-                <span>Hertzovo napätie</span>
+            <div className="metrics">
+              <div className="panel metric">
+                <span>
+                  PREVODOVÝ POMER <ArrowUpRight size={14} />
+                </span>
                 <strong>
-                  {fresh ? fmt(result.hertz_mpa, 1) : '—'} <small>MPa</small>
+                  {fresh ? fmt(result.ratio) : '—'}
+                  <small> : 1</small>
                 </strong>
+                <p>i = z₂ / z₁</p>
               </div>
-              <div>
-                <span>Ohyb v päte zuba 1 / 2</span>
+              <div className="panel metric">
+                <span>
+                  OSOVÁ VZDIALENOSŤ <Ruler size={14} />
+                </span>
                 <strong>
-                  {fresh && result.bending_mpa
-                    ? result.bending_mpa.map((v) => fmt(v, 1)).join(' / ')
-                    : '—'}{' '}
-                  <small>MPa</small>
+                  {fresh ? fmt(result.center_distance) : '—'}
+                  <small> mm</small>
                 </strong>
+                <p>Pracovná vzdialenosť osí</p>
               </div>
-              {fresh && !result.bending_mpa && (
-                <p className="hint">
-                  Lewisov odhad je dostupný pre nekorigované ozubenie s uhlom 20°.
+              <div className="panel metric">
+                <span>
+                  SÚČINITEĽ ZÁBERU <Layers3 size={14} />
+                </span>
+                <strong>
+                  {fresh ? fmt(result.contact_ratio, 3) : '—'}
+                  <small> εα</small>
+                </strong>
+                <p>Čelný záberový pomer</p>
+              </div>
+            </div>
+            <div className="panel dimensions">
+              <div className="panel-title">
+                <Ruler size={17} />
+                <h2>Geometrické rozmery</h2>
+                <span className="muted">Všetky rozmery v mm</span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Priemer</th>
+                    <th>
+                      <span className="swatch amber" /> Pastorok
+                    </th>
+                    <th>
+                      <span className="swatch teal" /> Koleso
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(
+                    [
+                      ['Rozstupový', 'd', 'pitch_diameter'],
+                      ['Základný', 'dᵦ', 'base_diameter'],
+                      ['Hlavový', 'dₐ', 'tip_diameter'],
+                      ['Pätný', 'dᶠ', 'root_diameter'],
+                    ] as const
+                  ).map(([label, symbol, key]) => (
+                    <tr key={key}>
+                      <td>
+                        {label} <span className="symbol">{symbol}</span>
+                      </td>
+                      {[0, 1].map((i) => (
+                        <td key={i}>{fresh ? fmt(result.gears[i][key], 3) : '—'}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <aside className="right-column">
+            <div className="panel analysis">
+              <div className="panel-title">
+                <Activity size={17} />
+                <h2>Analýza návrhu</h2>
+              </div>
+              <div className={`status-card ${fresh && result.geometry_ok ? 'pass' : 'attention'}`}>
+                {fresh && result.geometry_ok ? <Check size={22} /> : <CircleAlert size={22} />}
+                <div>
+                  <strong>
+                    {!fresh
+                      ? 'Čaká na výpočet'
+                      : result.geometry_ok
+                        ? 'Geometrické kontroly vyhovujú'
+                        : 'Návrh vyžaduje úpravu'}
+                  </strong>
+                  <p>Predbežné overenie geometrie</p>
+                </div>
+              </div>
+              <div className="checks">
+                {fresh &&
+                  result.checks.map((c) => (
+                    <div className="check-row" key={c.name}>
+                      {c.ok ? (
+                        <Check size={15} className="success" />
+                      ) : (
+                        <CircleAlert size={15} className="warning" />
+                      )}
+                      <div>
+                        <strong>{c.name}</strong>
+                        <span>{c.detail}</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              <div className="stress">
+                <div className="section-label">
+                  <span>02</span> ODHAD ZAŤAŽENIA
+                </div>
+                <div>
+                  <span>Hertzovo napätie</span>
+                  <strong>
+                    {fresh ? fmt(result.hertz_mpa, 1) : '—'} <small>MPa</small>
+                  </strong>
+                </div>
+                <div>
+                  <span>Ohyb v päte zuba 1 / 2</span>
+                  <strong>
+                    {fresh && result.bending_mpa
+                      ? result.bending_mpa.map((v) => fmt(v, 1)).join(' / ')
+                      : '—'}{' '}
+                    <small>MPa</small>
+                  </strong>
+                </div>
+                {fresh && !result.bending_mpa && (
+                  <p className="hint">
+                    Lewisov odhad je dostupný pre nekorigované ozubenie s uhlom 20°.
+                  </p>
+                )}
+                <div>
+                  <span>Výstupné otáčky</span>
+                  <strong>
+                    {fresh ? fmt(result.output_rpm, 0) : '—'} <small>min⁻¹</small>
+                  </strong>
+                </div>
+              </div>
+              <p className="analysis-note">
+                <CircleAlert size={14} /> Výpočty sú orientačné. Nezahŕňajú únavu, dynamiku ani
+                bezpečnostné súčinitele podľa ISO 6336 / DIN 3990.
+              </p>
+            </div>
+            <div className="panel exports">
+              <div className="panel-title">
+                <ArrowDownToLine size={17} />
+                <h2>Export návrhu</h2>
+              </div>
+              <p>Model pre ďalšiu prácu. Správa pre váš výpočtový archív.</p>
+              <label className="approximation">
+                <input
+                  type="checkbox"
+                  checked={approximate}
+                  onChange={(e) => setApproximate(e.target.checked)}
+                />
+                <span>Povoliť návrhový STEP s B-spline aproximáciou a radiálnou pätou.</span>
+              </label>
+              <button
+                className="primary"
+                disabled={!fresh || !result.geometry_ok || !approximate || !!busy}
+                onClick={() => exportFile('step')}
+              >
+                <Box size={17} />
+                {busy === 'step' ? exportProgress || 'Generujem STEP…' : 'Stiahnuť STEP'}
+                <span>.stp</span>
+              </button>
+              <button
+                className="secondary"
+                disabled={!fresh || !!busy}
+                onClick={() => exportFile('report')}
+              >
+                <FileText size={17} />
+                {busy === 'report' ? 'Generujem PDF…' : 'Výpočtová správa'}
+                <span>.pdf</span>
+              </button>
+              <p className="hint">
+                Exaktný STEP bez aproximácie nie je podporovaný. Náhľad ani export nemodelujú
+                výrobnú trochoidu.
+              </p>
+              {exportError && (
+                <p className="error" role="alert">
+                  {exportError}
                 </p>
               )}
-              <div>
-                <span>Výstupné otáčky</span>
-                <strong>
-                  {fresh ? fmt(result.output_rpm, 0) : '—'} <small>min⁻¹</small>
-                </strong>
-              </div>
             </div>
-            <p className="analysis-note">
-              <CircleAlert size={14} /> Výpočty sú orientačné. Nezahŕňajú únavu, dynamiku ani
-              bezpečnostné súčinitele podľa ISO 6336 / DIN 3990.
-            </p>
-          </div>
-          <div className="panel exports">
-            <div className="panel-title">
-              <ArrowDownToLine size={17} />
-              <h2>Export návrhu</h2>
-            </div>
-            <p>Model pre ďalšiu prácu. Správa pre váš výpočtový archív.</p>
-            <label className="approximation">
-              <input
-                type="checkbox"
-                checked={approximate}
-                onChange={(e) => setApproximate(e.target.checked)}
-              />
-              <span>Povoliť návrhový STEP s B-spline aproximáciou a radiálnou pätou.</span>
-            </label>
-            <button
-              className="primary"
-              disabled={!fresh || !result.geometry_ok || !approximate || !!busy}
-              onClick={() => exportFile('step')}
-            >
-              <Box size={17} />
-              {busy === 'step' ? exportProgress || 'Generujem STEP…' : 'Stiahnuť STEP'}
-              <span>.stp</span>
-            </button>
-            <button
-              className="secondary"
-              disabled={!fresh || !!busy}
-              onClick={() => exportFile('report')}
-            >
-              <FileText size={17} />
-              {busy === 'report' ? 'Generujem PDF…' : 'Výpočtová správa'}
-              <span>.pdf</span>
-            </button>
-            <p className="hint">
-              Exaktný STEP bez aproximácie nie je podporovaný. Náhľad ani export nemodelujú výrobnú
-              trochoidu.
-            </p>
-            {exportError && (
-              <p className="error" role="alert">
-                {exportError}
-              </p>
-            )}
-          </div>
-        </aside>
-      </main>
+          </aside>
+        </main>
+      )}
       <footer className="page-footer">
         <span>
           <Cog size={13} /> GREAT GEAR GENERATOR

@@ -6,19 +6,28 @@ test('measured single gear: identification, uncertainty, transfer and stale resu
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
-  await page.getByText('Reverzný návrh zo skenu', { exact: false }).click();
+  await expect(
+    page.getByRole('button', { name: 'Z nameraného kusu', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Modul m', { exact: true })).not.toBeVisible();
+  await expect(page.locator('#reverse-module')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
+  await page.getByLabel('Povoliť návrhový STEP', { exact: false }).check();
+  await page.getByRole('button', { name: 'Z nameraného kusu', exact: true }).click();
   await page.getByRole('button', { name: 'Vyplniť príklad merania' }).click();
   await page.getByRole('button', { name: 'Nájsť kandidátov' }).click();
   const results = page.getByRole('region', { name: 'Výsledok identifikácie' });
   await expect(results).toContainText('Počet rozmerovo prípustných kandidátov: 1');
   await expect(results).toContainText('hypotetické druhé koleso');
-  await page.getByLabel('Povoliť návrhový STEP', { exact: false }).check();
+  await expect(results).toContainText('Prípustné moduly z meraní: 2 mm');
   await page.getByRole('button', { name: 'Preniesť kandidáta do návrhu' }).click();
   await expect(page.getByLabel('Modul m', { exact: true })).toHaveValue('2');
   await expect(page.getByLabel('Počet zubov z₁', { exact: true })).toHaveValue('24');
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await expect(page.getByLabel('Povoliť návrhový STEP', { exact: false })).not.toBeChecked();
   await expect(page.getByRole('button', { name: /Stiahnuť STEP/ })).toBeDisabled();
+  await page.getByRole('button', { name: 'Z nameraného kusu', exact: true }).click();
+  await expect(page.locator('#reverse-module')).toHaveValue('');
   await page.locator('#reverse-pressureAngle').fill('');
   await expect(results).not.toBeVisible();
   await page.getByRole('button', { name: 'Nájsť kandidátov' }).click();
@@ -36,7 +45,7 @@ test('measured single gear: identification, uncertainty, transfer and stale resu
 test('corrected pair and mobile reverse form', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.getByText('Reverzný návrh zo skenu', { exact: false }).click();
+  await expect(page.getByLabel('Modul m', { exact: true })).not.toBeVisible();
   await page.getByRole('button', { name: 'Súkolesie so známou vzdialenosťou' }).click();
   for (const [key, value] of Object.entries({
     teeth1: '24',

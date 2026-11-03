@@ -61,18 +61,19 @@ export default function ReverseEngineering({ onApply }: { onApply: (design: Desi
   );
   const candidate = result?.candidates[selected];
   return (
-    <details className="panel reverse-panel">
-      <summary>
+    <section className="panel reverse-panel" aria-label="Reverzný návrh zo skenu">
+      <div className="reverse-heading">
         <ScanLine size={19} />
         <span>
           Reverzný návrh zo skenu <small>Z nameraných rozmerov na kandidátov ozubenia</small>
         </span>
-      </summary>
+      </div>
       <div className="reverse-body">
         <p className="reverse-intro">
-          Zadajte skutočne namerané hodnoty. Neznáme rozmery nechajte prázdne. Počet zubov a jeden
-          priemer spravidla neurčujú pôvodné ozubenie jednoznačne. Import STL ani automatické
-          meranie skenu táto funkcia nerobí.
+          Modul nezadávajte — je výsledkom tohto výpočtu. Začnite počtom zubov a nameraným vonkajším
+          priemerom; pätný priemer pomôže odhad spresniť. Neznáme rozmery nechajte prázdne. Počet
+          zubov a jeden priemer spravidla neurčujú pôvodné ozubenie jednoznačne. Import STL ani
+          automatické meranie skenu táto funkcia nerobí.
         </p>
         <div className="mode-tabs" role="group" aria-label="Reverzný návrh – rozsah">
           <button
@@ -150,8 +151,15 @@ export default function ReverseEngineering({ onApply }: { onApply: (design: Desi
               <div className="reverse-fields">
                 {input('tolerance', 'Tolerancia dₐ / dᶠ / dᵦ ±', true)}
                 {input('pressureAngle', 'Známy uhol záberu (inak nechať prázdne)', false, '°')}
-                {input('module', 'Známy / neštandardný modul (voliteľné)')}
               </div>
+              <details className="reverse-advanced">
+                <summary>Rozšírené: modul už poznám</summary>
+                {input('module', 'Známy / neštandardný modul (voliteľné)')}
+                <p className="hint">
+                  Pri hľadaní modulu toto pole nechajte prázdne. Vyplnenie obmedzí výpočet na zadaný
+                  modul.
+                </p>
+              </details>
               <label className="approximation reverse-checkbox">
                 <input
                   type="checkbox"
@@ -210,6 +218,16 @@ export default function ReverseEngineering({ onApply }: { onApply: (design: Desi
                 ? `Počet rozmerovo prípustných kandidátov: ${result.candidates.length}`
                 : 'Žiadny kandidát v zadanom modeli'}
             </h3>
+            {!!result.candidates.length && (
+              <p className="reverse-module-result">
+                <strong>
+                  Prípustné moduly z meraní:{' '}
+                  {[...new Set(result.candidates.map((c) => c.module))]
+                    .map((m) => `${fmt(m)} mm`)
+                    .join(' / ')}
+                </strong>
+              </p>
+            )}
             <p className="hint">
               {result.candidates.length === 1
                 ? 'Jeden kandidát v prehľadávanom zozname nie je dôkazom jedinečnosti pôvodného ozubenia.'
@@ -349,6 +367,6 @@ export default function ReverseEngineering({ onApply }: { onApply: (design: Desi
           </section>
         )}
       </div>
-    </details>
+    </section>
   );
 }
