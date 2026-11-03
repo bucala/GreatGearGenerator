@@ -81,6 +81,10 @@ nenahrádza tým priestorové rozdelenie zaťaženia ani pevnostnú analýzu.
 ### Kótovaný detail zuba a medzery
 
 V režime priameho návrhu je pre každé koleso samostatný zväčšený detail aj export SVG.
+Referenčné kružnice majú krátke značky A (hlavová), B (rozstupová), C (základná)
+a D (pätná). Hodnoty a vzory čiar sú v oddelenej legende; geometria je orezaná
+na vlastnú kresliacu oblasť, aby čiary nevstupovali do textu legendy. Rovnaké
+oddelenie zostáva aj v exportovanom SVG.
 `d / Dr` označuje rozstupový priemer; `df / Df` pätný, `da` hlavový, `db` základný.
 Kóty vznikajú priamo z aktuálneho výpočtu, nie meraním vzorkovaného náhľadu:
 

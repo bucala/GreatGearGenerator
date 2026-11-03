@@ -1,6 +1,44 @@
 import { expect, test } from '@playwright/test';
 import { openWorkbench } from './openWorkbench';
 
+test('reference circle tags and legend stay separated for a 68-tooth gear', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await openWorkbench(page);
+  await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
+  await page.getByLabel('Počet zubov z₁', { exact: true }).fill('68');
+  const detail = page.getByRole('region', { name: 'Kótovaný detail zuba', exact: true });
+  const drawing = detail.getByRole('img', { name: /Geometricky kótovaný zub/ });
+  await expect(drawing).toContainText('B · Ø d / Dr = 136');
+  await expect(drawing).toContainText('A · Ø dₐ = 140');
+  const layout = await drawing.evaluate((svg) => {
+    const geometry = svg.querySelector('[data-geometry-clip]') as SVGRectElement;
+    const legend = svg.querySelector('[data-legend-frame]') as SVGRectElement;
+    const g = geometry.getBBox(),
+      l = legend.getBBox();
+    const labels = [...svg.querySelectorAll('[data-drawing-legend] text')].map((t) =>
+      (t as SVGGraphicsElement).getBBox(),
+    );
+    return {
+      gap: l.x - (g.x + g.width),
+      contained: labels.every(
+        (b) =>
+          b.x >= l.x &&
+          b.x + b.width <= l.x + l.width &&
+          b.y >= l.y &&
+          b.y + b.height <= l.y + l.height,
+      ),
+    };
+  });
+  expect(layout.gap).toBeGreaterThan(0);
+  expect(layout.contained).toBe(true);
+  await detail.screenshot({ path: '../output/screenshots/tooth-legend-z68.png' });
+  const download = page.waitForEvent('download');
+  await detail.getByRole('button', { name: 'Stiahnuť kótovaný SVG' }).click();
+  await (await download).saveAs('../output/drawings/gear-68-legend.svg');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('all three blends use a CAD mesh and the same STEP solid', async ({ page }) => {
   test.setTimeout(360000);
   await openWorkbench(page);

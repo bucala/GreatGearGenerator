@@ -23,6 +23,7 @@ export default function ToothDetail({ result }: { result: Analysis }) {
   const ref = useRef<SVGSVGElement>(null);
   const uid = useId().replace(/:/g, '');
   const arrow = `tooth-arrow-${uid}`;
+  const clip = `tooth-geometry-${uid}`;
   const g = result.gears[selected],
     d = toothDimensions(g, result),
     m = d.module;
@@ -33,7 +34,7 @@ export default function ToothDetail({ result }: { result: Analysis }) {
   const pitchAngle = (2 * Math.PI) / g.teeth,
     half = d.halfThicknessAngle;
   const top = -ra - 2.4 * m,
-    bottom = Math.max(-Math.min(rf, rb) + 1.8 * m, top + 8.6 * m);
+    bottom = Math.max(-Math.min(rf, rb) + 1.8 * m, top + 9.2 * m);
   const edges = [...profileSegments(g, -1), ...profileSegments(g, 0)];
   const path = `M ${xy(segmentPoint(g, edges[0], 0))} ${edges.map((e) => edgePath(g, e)).join(' ')}`;
   const blue = '#1d5e9c',
@@ -107,11 +108,32 @@ export default function ToothDetail({ result }: { result: Analysis }) {
     </g>
   );
   const diameters = [
-    ['dₐ', ra, '#a75525'],
-    ['d / Dr', r, blue],
-    ['dᵦ', rb, '#647787'],
-    ['dᶠ', rf, '#3a7c60'],
-  ] as const;
+    { id: 'A', name: 'dₐ', radius: ra, color: '#a75525', dash: undefined, tagX: -1.8 },
+    {
+      id: 'B',
+      name: 'd / Dr',
+      radius: r,
+      color: blue,
+      dash: `${0.28 * m} ${0.08 * m} ${0.04 * m} ${0.08 * m}`,
+      tagX: -1.8,
+    },
+    {
+      id: 'C',
+      name: 'dᵦ',
+      radius: rb,
+      color: '#647787',
+      dash: `${0.035 * m} ${0.08 * m}`,
+      tagX: -1.3,
+    },
+    {
+      id: 'D',
+      name: 'dᶠ',
+      radius: rf,
+      color: '#3a7c60',
+      dash: `${0.14 * m} ${0.08 * m}`,
+      tagX: -2.3,
+    },
+  ];
   const pressure = (result.parameters.pressure_angle * Math.PI) / 180;
   const contact = project(polar(r, -half));
   const around = (angle: number, length: number): Point2 => [
@@ -168,6 +190,15 @@ export default function ToothDetail({ result }: { result: Analysis }) {
         >
           <title>Zub a zubová medzera – analytické kóty v mm, evolventa vzorkovaná</title>
           <defs>
+            <clipPath id={clip}>
+              <rect
+                data-geometry-clip="true"
+                x={-5.4 * m}
+                y={top + 0.65 * m}
+                width={9.95 * m}
+                height={bottom - top - 1.65 * m}
+              />
+            </clipPath>
             <marker
               id={arrow}
               markerWidth="6"
@@ -189,143 +220,193 @@ export default function ToothDetail({ result }: { result: Analysis }) {
                 : 'BEZ ZAOBLENIA'}{' '}
             · mm
           </text>
-          <circle cx="0" cy="0" r={rf} fill="#eaf0f3" />
-          <path d={`${path} L 0 0 Z`} fill="#eaf0f3" />
-          {g.bore > 0 && (
-            <circle cx="0" cy="0" r={g.bore / 2} fill="white" stroke={ink} strokeWidth={0.02 * m} />
-          )}
-          <path d={path} fill="none" stroke={ink} strokeWidth={0.035 * m} />
-          {diameters.map(([name, radius, color]) => (
-            <g key={name}>
+          <g clipPath={`url(#${clip})`} aria-label="Geometria a kóty">
+            <circle cx="0" cy="0" r={rf} fill="#eaf0f3" />
+            <path d={`${path} L 0 0 Z`} fill="#eaf0f3" />
+            {g.bore > 0 && (
               <circle
                 cx="0"
                 cy="0"
-                r={radius}
-                stroke={color}
-                strokeWidth={0.012 * m}
-                fill="none"
-                strokeDasharray={
-                  name === 'd / Dr' ? `${0.2 * m} ${0.1 * m}` : `${0.04 * m} ${0.09 * m}`
-                }
+                r={g.bore / 2}
+                fill="white"
+                stroke={ink}
+                strokeWidth={0.02 * m}
               />
-            </g>
-          ))}
-          <path
-            d={`M 0 ${top + 0.7 * m} V ${bottom} M ${xy(polar(ra + 1.8 * m, -pitchAngle))} L 0 0`}
-            stroke="#8799a3"
-            strokeWidth={0.01 * m}
-            strokeDasharray={`${0.16 * m} ${0.08 * m}`}
-          />
-          {arcDim(
-            ra + 0.12 * m,
-            -g.tip_thickness / g.tip_diameter,
-            g.tip_thickness / g.tip_diameter,
-            'sₐ',
-            d.tipThickness,
-            ra,
-          )}
-          {arcDim(ra + 0.5 * m, -half, half, 's', d.thickness)}
-          {arcDim(ra + 0.5 * m, -pitchAngle + half, -half, 'e', d.space)}
-          {arcDim(ra + 1.35 * m, -pitchAngle, 0, 'p', d.pitch)}
-          {arcDim(
-            rf - 0.45 * m,
-            -pitchAngle + d.rootHalfAngle,
-            -d.rootHalfAngle,
-            'eᶠ',
-            d.rootSpace,
-            rf,
-          )}
-          {height('hₐ', ra, r, -2.7 * m)}
-          {height('hᶠ', r, rf, -2.7 * m)}
-          {height('h', ra, rf, -3.8 * m)}
-          <g stroke={blue} strokeWidth={0.012 * m} fill="none">
-            <path
-              d={`M ${around(half, 1.1 * m).join(' ')} L ${contact.join(' ')} L ${around(half - pressure, 1.1 * m).join(' ')}`}
-            />
-            <path
-              d={`M ${around(half - pressure, 0.65 * m).join(' ')} A ${0.65 * m} ${0.65 * m} 0 0 1 ${around(half, 0.65 * m).join(' ')}`}
-            />
-          </g>
-          {label(
-            `α = ${fmt(result.parameters.pressure_angle)}°`,
-            ...around(half - pressure / 2, 1.55 * m),
-          )}
-          {(g.root_fillet || g.tip_fillet) &&
-            profileSegments(g, 0)
-              .filter((e) => e.kind === 'arc' && Math.hypot(...e.center) > 1e-8)
-              .map((e, i) => (
-                <g key={i}>
-                  <path
-                    d={`M ${xy(segmentPoint(g, e, 0))} ${edgePath(g, e)}`}
-                    fill="none"
-                    stroke="#c86327"
-                    strokeWidth={0.05 * m}
-                  />
-                  {i === 0 && g.root_fillet && (
-                    <>
-                      <path
-                        d={`M ${xy(segmentPoint(g, e, 0.5))} L ${-1.9 * m} ${-rf + 0.7 * m} H ${0.7 * m}`}
-                        fill="none"
-                        stroke="#c86327"
-                        strokeWidth={0.015 * m}
-                      />
-                      <text x={-0.6 * m} y={-rf + 0.95 * m} fill="#a44b1f" fontSize={0.24 * m}>
-                        R = {fmt(d.radius)}
-                      </text>
-                    </>
-                  )}
-                </g>
-              ))}
-          <g fill={ink} fontSize={0.25 * m}>
-            <text x={5.3 * m} y={top + 1 * m}>
-              m = {fmt(m)} mm
-            </text>
-            <text x={5.3 * m} y={top + 1.45 * m}>
-              z = {g.teeth} · α = {fmt(result.parameters.pressure_angle)}°
-            </text>
-            <text x={5.3 * m} y={top + 1.9 * m}>
-              x = {fmt(g.profile_shift)} · b = {fmt(result.parameters.width)}
-            </text>
-            {diameters.map(([name, radius, color], i) => {
-              const x = 1.25 * m,
-                y = -Math.sqrt(radius * radius - x * x),
-                target = top + (2.65 + i * 0.45) * m;
+            )}
+            <path d={path} fill="none" stroke={ink} strokeWidth={0.035 * m} />
+            {diameters.map(({ id, radius, color, dash, tagX }) => {
+              const x = -Math.min(Math.abs(tagX * m), radius * 0.85),
+                y = -Math.sqrt(radius * radius - x * x);
               return (
-                <g key={name}>
-                  <circle cx={x} cy={y} r={0.035 * m} fill={color} />
-                  <path
-                    d={`M ${x} ${y} L ${4.5 * m} ${y} L ${5.1 * m} ${target - 0.08 * m}`}
+                <g key={id}>
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r={radius}
                     stroke={color}
                     strokeWidth={0.012 * m}
                     fill="none"
+                    strokeDasharray={dash}
                   />
-                  <text x={5.3 * m} y={target} fill={color}>
-                    Ø {name} = {fmt(2 * radius)}
+                  <rect
+                    x={x - 0.19 * m}
+                    y={y - 0.14 * m}
+                    width={0.38 * m}
+                    height={0.28 * m}
+                    rx={0.04 * m}
+                    fill="white"
+                    stroke={color}
+                    strokeWidth={0.012 * m}
+                  />
+                  <text
+                    x={x}
+                    y={y + 0.075 * m}
+                    textAnchor="middle"
+                    fill={color}
+                    fontSize={0.21 * m}
+                  >
+                    {id}
                   </text>
                 </g>
               );
             })}
-            <text x={5.3 * m} y={top + 4.9 * m}>
-              Otvor Ø = {fmt(g.bore)}
+            <path
+              d={`M 0 ${top + 0.7 * m} V ${bottom} M ${xy(polar(ra + 1.8 * m, -pitchAngle))} L 0 0`}
+              stroke="#8799a3"
+              strokeWidth={0.01 * m}
+              strokeDasharray={`${0.16 * m} ${0.08 * m}`}
+            />
+            {arcDim(
+              ra + 0.12 * m,
+              -g.tip_thickness / g.tip_diameter,
+              g.tip_thickness / g.tip_diameter,
+              'sₐ',
+              d.tipThickness,
+              ra,
+            )}
+            {arcDim(ra + 0.5 * m, -half, half, 's', d.thickness)}
+            {arcDim(ra + 0.5 * m, -pitchAngle + half, -half, 'e', d.space)}
+            {arcDim(ra + 1.35 * m, -pitchAngle, 0, 'p', d.pitch)}
+            {arcDim(
+              rf - 0.45 * m,
+              -pitchAngle + d.rootHalfAngle,
+              -d.rootHalfAngle,
+              'eᶠ',
+              d.rootSpace,
+              rf,
+            )}
+            {height('hₐ', ra, r, -2.7 * m)}
+            {height('hᶠ', r, rf, -2.7 * m)}
+            {height('h', ra, rf, -3.8 * m)}
+            <g stroke={blue} strokeWidth={0.012 * m} fill="none">
+              <path
+                d={`M ${around(half, 1.1 * m).join(' ')} L ${contact.join(' ')} L ${around(half - pressure, 1.1 * m).join(' ')}`}
+              />
+              <path
+                d={`M ${around(half - pressure, 0.65 * m).join(' ')} A ${0.65 * m} ${0.65 * m} 0 0 1 ${around(half, 0.65 * m).join(' ')}`}
+              />
+            </g>
+            {label(
+              `α = ${fmt(result.parameters.pressure_angle)}°`,
+              ...around(half - pressure / 2, 1.55 * m),
+            )}
+            {(g.root_fillet || g.tip_fillet) &&
+              profileSegments(g, 0)
+                .filter((e) => e.kind === 'arc' && Math.hypot(...e.center) > 1e-8)
+                .map((e, i) => (
+                  <g key={i}>
+                    <path
+                      d={`M ${xy(segmentPoint(g, e, 0))} ${edgePath(g, e)}`}
+                      fill="none"
+                      stroke="#c86327"
+                      strokeWidth={0.05 * m}
+                    />
+                    {i === 0 && g.root_fillet && (
+                      <>
+                        <path
+                          d={`M ${xy(segmentPoint(g, e, 0.5))} L ${-1.9 * m} ${-rf + 0.7 * m} H ${0.7 * m}`}
+                          fill="none"
+                          stroke="#c86327"
+                          strokeWidth={0.015 * m}
+                        />
+                        <text x={-0.6 * m} y={-rf + 0.95 * m} fill="#a44b1f" fontSize={0.24 * m}>
+                          R = {fmt(d.radius)}
+                        </text>
+                      </>
+                    )}
+                  </g>
+                ))}
+          </g>
+          <g
+            data-drawing-legend="true"
+            role="group"
+            aria-label="Legenda čiar a parametrov"
+            fill={ink}
+            fontSize={0.21 * m}
+          >
+            <rect
+              data-legend-frame="true"
+              x={4.8 * m}
+              y={top + 0.75 * m}
+              width={4.15 * m}
+              height={bottom - top - 1.6 * m}
+              rx={0.08 * m}
+              fill="#f7fafc"
+              stroke="#d6e0e6"
+              strokeWidth={0.015 * m}
+            />
+            <text x={5.05 * m} y={top + 1.15 * m} fontWeight="bold" fontSize={0.23 * m}>
+              LEGENDA A PARAMETRE
             </text>
-            <text x={5.3 * m} y={top + 5.35 * m}>
-              R päty = {fmt(d.radius)}
+            <text x={5.05 * m} y={top + 1.6 * m}>
+              m = {fmt(m)} mm
             </text>
-            <text x={5.3 * m} y={top + 5.8 * m}>
-              pᵦ = {fmt(d.basePitch)}
+            <text x={5.05 * m} y={top + 2.0 * m}>
+              z = {g.teeth} · α = {fmt(result.parameters.pressure_angle)}°
             </text>
-            <text x={5.3 * m} y={top + 6.25 * m}>
-              eₐ = {fmt(d.tipSpace)}
+            <text x={5.05 * m} y={top + 2.4 * m}>
+              x = {fmt(g.profile_shift)} · b = {fmt(result.parameters.width)}
             </text>
-            <text x={5.3 * m} y={top + 6.7 * m}>
-              eᶠ = {fmt(d.rootSpace)}
+            <text x={5.05 * m} y={top + 2.95 * m} fontSize={0.18 * m} fontWeight="bold">
+              REFERENČNÉ KRUŽNICE
             </text>
-            <text x={5.3 * m} y={top + 7.15 * m}>
-              R hlavy = {fmt(g.tip_fillet?.radius ?? 0)}
-            </text>
-            <text x={5.3 * m} y={top + 7.6 * m}>
-              R šírky = {fmt(g.face_radius)}
-            </text>
+            {diameters.map(({ id, name, radius, color, dash }, i) => {
+              const y = top + (3.4 + i * 0.5) * m;
+              return (
+                <g key={id}>
+                  <line
+                    x1={5.05 * m}
+                    x2={5.6 * m}
+                    y1={y - 0.07 * m}
+                    y2={y - 0.07 * m}
+                    stroke={color}
+                    strokeWidth={0.025 * m}
+                    strokeDasharray={dash}
+                  />
+                  <text x={5.75 * m} y={y} fill={color}>
+                    {id} · Ø {name} = {fmt(2 * radius)}
+                  </text>
+                </g>
+              );
+            })}
+            <path
+              d={`M ${5.05 * m} ${top + 5.15 * m} H ${8.7 * m}`}
+              stroke="#d6e0e6"
+              strokeWidth={0.015 * m}
+            />
+            {[
+              `Otvor Ø = ${fmt(g.bore)}`,
+              `R päty = ${fmt(d.radius)}`,
+              `pᵦ = ${fmt(d.basePitch)}`,
+              `eₐ = ${fmt(d.tipSpace)}`,
+              `eᶠ = ${fmt(d.rootSpace)}`,
+              `R hlavy = ${fmt(g.tip_fillet?.radius ?? 0)}`,
+              `R šírky = ${fmt(g.face_radius)}`,
+            ].map((text, i) => (
+              <text key={i} x={5.05 * m} y={top + (5.6 + i * 0.4) * m}>
+                {text}
+              </text>
+            ))}
           </g>
           <text x={-5 * m} y={bottom - 0.45 * m} fill={ink} fontSize={0.2 * m}>
             s, e, p sú dĺžky oblúkov na rozstupovej kružnici. Kóty nie sú rozmery vytlačeného SVG.
