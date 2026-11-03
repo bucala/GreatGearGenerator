@@ -895,3 +895,189 @@ h1 > span {
     transition: none !important;
   }
 }
+
+.reverse-panel {
+  margin-bottom: 22px;
+}
+.reverse-panel > summary {
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 19px 22px;
+  font-size: 14px;
+  color: var(--accent);
+}
+.reverse-panel > summary::after {
+  content: '+';
+  margin-left: auto;
+  font-size: 22px;
+}
+.reverse-panel[open] > summary::after {
+  content: '−';
+}
+.reverse-panel > summary small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 5px;
+}
+.reverse-body {
+  border-top: 1px solid var(--line);
+  padding: 22px;
+}
+.reverse-intro {
+  max-width: 880px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.reverse-body .mode-tabs {
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.reverse-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+  gap: 20px;
+}
+.reverse-input-grid fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 0;
+  margin: 0;
+}
+.reverse-input-grid legend {
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+.reverse-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.reverse-fields .field {
+  min-width: 0;
+}
+.reverse-fields .field label {
+  min-height: 30px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.reverse-fields input {
+  width: 100%;
+  min-width: 0;
+}
+.reverse-panel .hint {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.reverse-checkbox {
+  margin-top: 18px;
+}
+.reverse-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.reverse-actions .primary {
+  width: auto;
+}
+.reverse-results {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.reverse-results h3 {
+  font-size: 14px;
+}
+.reverse-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.reverse-results table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.reverse-results caption {
+  text-align: left;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.reverse-results td,
+.reverse-results th {
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.reverse-results th {
+  font-weight: 500;
+  color: var(--muted);
+}
+.reverse-results tr.selected {
+  background: var(--surface);
+}
+.reverse-results input[type='radio'] {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+}
+.reverse-comparison {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.reverse-guidance {
+  margin-top: 22px;
+  max-width: 1000px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.reverse-guidance p {
+  margin: 12px 0;
+}
+.reverse-guidance ul {
+  padding-left: 18px;
+}
+.reverse-guidance li {
+  margin: 8px 0;
+}
+.reverse-applied {
+  color: var(--success);
+  font-size: 12px;
+  margin-top: 14px;
+  line-height: 1.6;
+}
+@media (max-width: 720px) {
+  .reverse-body {
+    padding: 15px;
+  }
+  .reverse-panel > summary {
+    padding: 16px;
+  }
+  .reverse-fields {
+    gap: 12px;
+  }
+  .reverse-comparison {
+    padding: 12px;
+  }
+  .reverse-actions > button {
+    width: 100%;
+    justify-content: center;
+  }
+}

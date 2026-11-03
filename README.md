@@ -140,6 +140,8 @@ Kliknutie na hlavný náhľad otvorí aplikáciu. Ďalšie pohľady rozbalíte n
 
 ## Funkcie
 
+**Reverzný návrh zo skenu:** z počtu zubov a nameraných priemerov nájde prípustné kandidáty modulu, uhla a korekcie vrátane tolerancie a porovnania odchýlok. Podporuje samostatné koleso aj pár so známou nominálnou osovou vzdialenosťou a prenos kandidáta do 2D/3D návrhu. Merania nemusia určovať jediné riešenie. [Postup, rovnice a obmedzenia →](docs/REVERSE_ENGINEERING.md)
+
 | Návrh | Výsledok |
 | --- | --- |
 | Modul, zuby, uhol, korekcie, šírka, otvory | Analytické rozmery oboch kolies a pracovná osová vzdialenosť |

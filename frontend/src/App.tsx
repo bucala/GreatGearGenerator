@@ -21,6 +21,7 @@ import {
 import { analyze, browserRuntime, download } from './api';
 import { defaults, type Analysis, type Design } from './types';
 import Sketch from './Sketch';
+import ReverseEngineering from './ReverseEngineering';
 
 const Scene = lazy(() => import('./Scene'));
 type Draft = Record<keyof Design, string>;
@@ -214,6 +215,15 @@ export default function App() {
           <RotateCcw size={15} /> Obnoviť návrh
         </button>
       </div>
+      <ReverseEngineering
+        onApply={(design) => {
+          setDraft(
+            Object.fromEntries(Object.entries(design).map(([k, v]) => [k, String(v)])) as Draft,
+          );
+          setApproximate(false);
+          setAnimate(false);
+        }}
+      />
       <main className="workspace">
         <aside className="panel parameters">
           <div className="panel-title">
