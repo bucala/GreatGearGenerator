@@ -34,7 +34,7 @@ jobs:
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- --reporter=line,github
         working-directory: frontend
       - run: uv run python scripts/verify_browser_exports.py
       - name: Record tested revision

@@ -69,7 +69,7 @@ jobs:
       - name: Exercise the live application and download exports
         env:
           TEST_BASE_URL: https://greatgeargenerator-bucala.surge.sh
-        run: npm run test:e2e
+        run: npm run test:e2e -- --reporter=line,github
         working-directory: frontend
       - name: Verify live STEP and PDF downloads
         run: uv run python scripts/verify_browser_exports.py
