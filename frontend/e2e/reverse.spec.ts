@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { openWorkbench } from './openWorkbench';
 
 test('measured single gear: identification, uncertainty, transfer and stale results', async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/');
+  await openWorkbench(page);
   await expect(
     page.getByRole('button', { name: 'Z nameraného kusu', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
@@ -44,7 +45,7 @@ test('measured single gear: identification, uncertainty, transfer and stale resu
 
 test('corrected pair and mobile reverse form', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await openWorkbench(page);
   await expect(page.getByLabel('Modul m', { exact: true })).not.toBeVisible();
   await page.getByRole('button', { name: 'Súkolesie so známou vzdialenosťou' }).click();
   for (const [key, value] of Object.entries({

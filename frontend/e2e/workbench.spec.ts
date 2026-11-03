@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openWorkbench } from './openWorkbench';
 
 test('static hosting: design, 3D, 2D, validation, themes and real exports', async ({ page }) => {
   const errors: string[] = [];
@@ -7,7 +8,7 @@ test('static hosting: design, 3D, 2D, validation, themes and real exports', asyn
     if (new URL(request.url()).pathname.startsWith('/api/')) apiCalls.push(request.url());
   });
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/');
+  await openWorkbench(page);
   await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await expect(page.locator('canvas')).toBeVisible();
@@ -48,7 +49,7 @@ test('static hosting: design, 3D, 2D, validation, themes and real exports', asyn
 
 test('mobile layout fits and invalid inputs are rejected without a server', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await openWorkbench(page);
   await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await page.getByRole('button', { name: '2D náčrt' }).click();
@@ -62,7 +63,7 @@ test('mobile layout fits and invalid inputs are rejected without a server', asyn
 });
 
 test('failed WASM download reports an error and allows a retry', async ({ page }) => {
-  await page.goto('/');
+  await openWorkbench(page);
   await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   await page.getByLabel('Povoliť návrhový STEP', { exact: false }).check();

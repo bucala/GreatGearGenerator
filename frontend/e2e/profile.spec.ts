@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openWorkbench } from './openWorkbench';
 
 test('rounded roots, dimensioned tooth/space SVG and actual rounded STEP export', async ({
   page,
@@ -6,7 +7,7 @@ test('rounded roots, dimensioned tooth/space SVG and actual rounded STEP export'
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.goto('/');
+  await openWorkbench(page);
   await page.getByRole('button', { name: 'Návrh z parametrov', exact: true }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
   const detail = page.getByRole('region', { name: 'Kótovaný detail zuba', exact: true });
