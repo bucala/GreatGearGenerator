@@ -60,7 +60,7 @@ test('3D zoom, reset and rotation work on desktop and mobile', async ({ page }) 
   await pause.click();
   await page.getByRole('button', { name: '2D náčrt', exact: true }).click();
   await expect(closer).not.toBeVisible();
-  await expect(play).not.toBeVisible();
+  await expect(play).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -97,7 +97,7 @@ test('static hosting: design, 3D, 2D, validation, themes and real exports', asyn
   await expect(page.getByText('Návrh vyžaduje úpravu')).toBeVisible();
   await expect(page.getByRole('button', { name: /Stiahnuť STEP/ })).toBeDisabled();
   await page.getByLabel('Modul m', { exact: true }).fill('');
-  await expect(page.getByRole('status')).toContainText('Vyplňte všetky parametre');
+  await expect(page.getByRole('status', { name: 'Stav výpočtu' })).toContainText('Vyplňte všetky parametre');
   await expect(page.getByRole('button', { name: /Výpočtová správa/ })).toBeDisabled();
   await page.getByRole('button', { name: 'Obnoviť návrh' }).click();
   await expect(page.getByText('Geometrické kontroly vyhovujú')).toBeVisible();
@@ -122,7 +122,7 @@ test('mobile layout fits and invalid inputs are rejected without a server', asyn
   expect(overflow).toBe(false);
   await page.screenshot({ path: '../output/screenshots/workbench-mobile.png', fullPage: true });
   await page.getByLabel('Modul m', { exact: true }).fill('-1');
-  await expect(page.getByRole('status')).toContainText('module');
+  await expect(page.getByRole('status', { name: 'Stav výpočtu' })).toContainText('module');
 });
 
 test('failed WASM download reports an error and allows a retry', async ({ page }) => {

@@ -78,9 +78,12 @@ kópia pre rovnaké geometrické parametre. Ďalší export tak nemusí opakova�
 Odhad napätí používa konzervatívnu strednú šírku `b_eff=b−2 max(R_hrán)`;
 nenahrádza tým priestorové rozdelenie zaťaženia ani pevnostnú analýzu.
 
-3D náhľad podporuje priblíženie kolieskom, dotykovým gestom aj tlačidlami.
-Percento vyjadruje pomer pôvodnej a aktuálnej vzdialenosti kamery od stredu scény.
-Obnovenie pohľadu vráti pôvodnú kameru; pauza otáčania zachová polohu kolies.
+3D náhľad aj 2D náčrt podporujú priblíženie kolieskom, dotykovým gestom aj tlačidlami.
+V 3D percento vyjadruje pomer pôvodnej a aktuálnej vzdialenosti kamery od stredu
+scény; v 2D mierku voči pôvodnému zobrazeniu (50–400 %). Ťahanie v 2D posúva náčrt.
+Obnovenie pohľadu vráti pôvodný zoom a polohu. Oba režimy umožňujú spustiť a
+pozastaviť otáčanie; pauza zachová polohu kolies. Kolesá sa otáčajú proti sebe
+v pomere počtu zubov a kóty v 2D zostávajú pevné.
 
 ### Kótovaný detail zuba a medzery
 

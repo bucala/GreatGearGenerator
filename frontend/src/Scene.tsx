@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Grid, Html } from '@react-three/drei';
 import { BufferGeometry, Float32BufferAttribute, ExtrudeGeometry, Mesh, Path, Shape } from 'three';
 import { generateMesh, type CadMesh } from './browserMesh';
 import type { Analysis, Gear } from './types';
+import ViewerZoomControls from './ViewerZoomControls';
 
 const cameraPosition: [number, number, number] = [82, 105, 115];
 const cameraDistance = Math.hypot(...cameraPosition);
@@ -185,41 +185,16 @@ export default function Scene({
           }}
         />
       </Canvas>
-      <div className="viewer-zoom-controls" role="group" aria-label="Priblíženie 3D modelu">
-        <button
-          type="button"
-          className="viewer-control"
-          aria-label="Oddialiť 3D model"
-          title="Oddialiť"
-          disabled={!interactive || !ready || distance >= maxDistance - 0.01}
-          onClick={() => changeZoom(false)}
-        >
-          <ZoomOut size={18} />
-        </button>
-        <output aria-label="Priblíženie" aria-live="polite">
-          {zoom} %
-        </output>
-        <button
-          type="button"
-          className="viewer-control"
-          aria-label="Priblížiť 3D model"
-          title="Priblížiť"
-          disabled={!interactive || !ready || distance <= minDistance + 0.01}
-          onClick={() => changeZoom(true)}
-        >
-          <ZoomIn size={18} />
-        </button>
-        <button
-          type="button"
-          className="viewer-control"
-          aria-label="Obnoviť 3D pohľad"
-          title="Obnoviť pohľad"
-          disabled={!interactive || !ready}
-          onClick={() => controls.current?.reset()}
-        >
-          <Maximize2 size={17} />
-        </button>
-      </div>
+      <ViewerZoomControls
+        dimension="3D"
+        zoom={zoom}
+        disabled={!interactive || !ready}
+        canZoomIn={distance > minDistance + 0.01}
+        canZoomOut={distance < maxDistance - 0.01}
+        onZoomIn={() => changeZoom(true)}
+        onZoomOut={() => changeZoom(false)}
+        onReset={() => controls.current?.reset()}
+      />
     </div>
   );
 }

@@ -502,7 +502,7 @@ export default function App() {
                 {result && (
                   <>
                     {mode === '2d' ? (
-                      <Sketch result={result} />
+                      <Sketch result={result} animate={animate && fresh} interactive={fresh} />
                     ) : (
                       <ViewerBoundary>
                         <Suspense
@@ -523,6 +523,7 @@ export default function App() {
                   <div
                     className={`viewer-message overlay ${error ? 'has-error' : ''}`}
                     role="status"
+                    aria-label="Stav výpočtu"
                   >
                     {error || 'Prepočítavam geometriu…'}
                   </div>
@@ -530,11 +531,11 @@ export default function App() {
                 <div className="viewer-corner">
                   <span className="crosshair">＋</span> XY / mm
                 </div>
-                {mode === '3d' && (
+                {result && (
                   <button
                     type="button"
                     className="viewer-control animate-button"
-                    disabled={!fresh || cadBusy}
+                    disabled={!fresh || (mode === '3d' && cadBusy)}
                     onClick={() => setAnimate(!animate)}
                     aria-pressed={animate}
                   >
@@ -550,7 +551,7 @@ export default function App() {
                 <span>
                   {mode === '3d'
                     ? 'Ťahanie: otáčanie · Koliesko: priblíženie'
-                    : 'Prerušovaná: rozstupová · Bodkovaná: základná'}
+                    : 'Ťahanie: posun · Koliesko: priblíženie · Čiarkovaná: rozstupová · Bodkovaná: základná'}
                 </span>
               </div>
             </div>
