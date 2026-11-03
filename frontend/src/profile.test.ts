@@ -5,6 +5,30 @@ import { profileSegments, segmentPoint } from './profile';
 import { toothDimensions } from './tooth';
 
 describe('tangent circular root blends', () => {
+  it('adds tangent tip blends and shortens the active contact length', () => {
+    const base = calculate({ ...defaults, root_fillet: 1 }),
+      rounded = calculate({ ...defaults, root_fillet: 1, tip_fillet: 1, face_fillet: 1 });
+    expect(rounded.geometry_ok).toBe(true);
+    expect(rounded.contact_ratio).toBeLessThan(base.contact_ratio);
+    rounded.gears.forEach((g, i) => {
+      const f = g.tip_fillet!;
+      expect(Math.hypot(...f.center)).toBeCloseTo(g.tip_diameter / 2 - f.radius, 9);
+      expect(Math.hypot(...f.tip)).toBeCloseTo(g.tip_diameter / 2, 9);
+      expect(Math.hypot(f.tangent[0] - f.center[0], f.tangent[1] - f.center[1])).toBeCloseTo(
+        f.radius,
+        9,
+      );
+      expect(g.tip_thickness).toBeLessThan(base.gears[i].tip_thickness);
+      expect(g.face_radius).toBeCloseTo(0.1, 10);
+      const edges = profileSegments(g);
+      edges.forEach((edge, j) => {
+        const a = segmentPoint(g, edge, 1),
+          b = segmentPoint(g, edges[(j + 1) % edges.length], 0);
+        expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeLessThan(1e-7);
+      });
+    });
+    expect(() => calculate({ ...defaults, face_fillet: 1 })).toThrow();
+  });
   it.each([
     {},
     { teeth1: 80, teeth2: 120, bore1: 0, bore2: 0 },

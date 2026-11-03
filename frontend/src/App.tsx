@@ -118,6 +118,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [exportError, setExportError] = useState('');
   const [busy, setBusy] = useState('');
+  const [cadBusy, setCadBusy] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
   const [mode, setMode] = useState<'3d' | '2d'>('3d');
   const [animate, setAnimate] = useState(false);
@@ -128,7 +129,14 @@ export default function App() {
     !!result && !!design && JSON.stringify(result.parameters) === JSON.stringify(design);
   const set = (key: keyof Design, value: string) => {
     setIdentifiedModule(null);
-    setDraft((d) => ({ ...d, [key]: value }));
+    setDraft((d) => ({
+      ...d,
+      [key]: value,
+      ...(key === 'face_fillet' && value === '1' ? { root_fillet: '1', tip_fillet: '1' } : {}),
+      ...((key === 'root_fillet' || key === 'tip_fillet') && value === '0'
+        ? { face_fillet: '0' }
+        : {}),
+    }));
   };
 
   useEffect(() => {
@@ -277,7 +285,7 @@ export default function App() {
               <span className="tag">mm</span>
             </div>
             <fieldset className="model-selection">
-              <legend>Model päty zuba</legend>
+              <legend>Zaoblenia modelu</legend>
               <label>
                 <input
                   type="radio"
@@ -285,7 +293,7 @@ export default function App() {
                   checked={draft.root_fillet === '0'}
                   onChange={() => set('root_fillet', '0')}
                 />{' '}
-                Bez zaoblenia
+                Bez zaoblenia päty
               </label>
               <label>
                 <input
@@ -294,15 +302,37 @@ export default function App() {
                   checked={draft.root_fillet === '1'}
                   onChange={() => set('root_fillet', '1')}
                 />{' '}
-                S navrhovaným zaoblením
+                S navrhovaným zaoblením päty
+              </label>
+              <p className="hint">Kruhový prechod v päte, návrh R ≤ 0,3 m.</p>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.tip_fillet === '1'}
+                  onChange={(e) => set('tip_fillet', e.target.checked ? '1' : '0')}
+                />{' '}
+                Zaobliť hlavu zuba
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.face_fillet === '1'}
+                  onChange={(e) => set('face_fillet', e.target.checked ? '1' : '0')}
+                />{' '}
+                Zaobliť hrany po šírke
               </label>
               <p className="hint">
-                Kruhový prechod v päte, návrh R ≤ 0,3 m. Netýka sa hrán po šírke ani hlavy zuba.
+                Hrany po šírke zapnú aj prechody päty a hlavy pre súvislý CAD obrys. 3D náhľad potom
+                počíta CAD jadro; môže trvať dlhšie. Najviac 60 zubov na koleso.
               </p>
               {fresh && (
                 <p className="hint">
                   R₁ = {fmt(result.gears[0].root_fillet?.radius ?? 0, 3)} mm · R₂ ={' '}
                   {fmt(result.gears[1].root_fillet?.radius ?? 0, 3)} mm
+                  <br />R hlavy:{' '}
+                  {result.gears.map((g) => fmt(g.tip_fillet?.radius ?? 0, 3)).join(' / ')} mm
+                  <br />R hrán po šírke:{' '}
+                  {result.gears.map((g) => fmt(g.face_radius, 3)).join(' / ')} mm
                 </p>
               )}
             </fieldset>
@@ -478,7 +508,11 @@ export default function App() {
                         <Suspense
                           fallback={<div className="viewer-message">Načítavam 3D náhľad…</div>}
                         >
-                          <Scene result={result} animate={animate && fresh} />
+                          <Scene
+                            result={result}
+                            animate={animate && fresh}
+                            onCadBusy={setCadBusy}
+                          />
                         </Suspense>
                       </ViewerBoundary>
                     )}
@@ -626,6 +660,11 @@ export default function App() {
                   ))}
               </div>
               <div className="stress">
+                {fresh && !!result.parameters.face_fillet && (
+                  <p className="hint">
+                    Pre odhad napätia: nezaoblená šírka b_eff = {fmt(result.effective_width, 3)} mm.
+                  </p>
+                )}
                 <div className="section-label">
                   <span>02</span> ODHAD ZAŤAŽENIA
                 </div>
@@ -677,7 +716,7 @@ export default function App() {
               </label>
               <button
                 className="primary"
-                disabled={!fresh || !result.geometry_ok || !approximate || !!busy}
+                disabled={!fresh || !result.geometry_ok || !approximate || !!busy || cadBusy}
                 onClick={() => exportFile('step')}
               >
                 <Box size={17} />

@@ -15,8 +15,18 @@ from backend.app.geometry import analyze
 from backend.app.models import Design
 
 volumes = []
-for rounding, filename in ((0, "gear-pair-approximate.stp"), (1, "gear-pair-rounded.stp")):
-    result = analyze(Design(root_fillet=rounding))
+for rounding, filename in (
+    (0, "gear-pair-approximate.stp"),
+    (1, "gear-pair-rounded.stp"),
+    (2, "gear-pair-all-blends.stp"),
+):
+    result = analyze(
+        Design(
+            root_fillet=int(rounding > 0),
+            tip_fillet=int(rounding == 2),
+            face_fillet=int(rounding == 2),
+        )
+    )
     path = Path("output/samples") / filename
     assert b"ISO-10303-21" in path.read_bytes(), "Not a STEP file"
     solids = cq.importers.importStep(str(path)).solids().vals()
@@ -32,7 +42,12 @@ for rounding, filename in ((0, "gear-pair-approximate.stp"), (1, "gear-pair-roun
         assert any(face.geomType() == "CYLINDER" for face in solid.Faces()), "Missing bore"
         variant_volumes.append(solid.Volume())
     volumes.append(variant_volumes)
-assert all(rounded > sharp for sharp, rounded in zip(*volumes)), "Root blends must add material"
+assert all(rounded > sharp for sharp, rounded in zip(volumes[0], volumes[1])), (
+    "Root blends must add material"
+)
+assert all(all_blends < root_only for root_only, all_blends in zip(volumes[1], volumes[2])), (
+    "Convex tip/face blends must remove material"
+)
 
 svg = ET.parse("output/drawings/gear-1-dimensioned-tooth.svg").getroot()
 assert svg.tag == "{http://www.w3.org/2000/svg}svg"
@@ -55,5 +70,5 @@ for required in (
 ):
     assert required in text, f"PDF missing {required}"
 print(
-    "Browser exports verified: both root variants, valid STEP solids, bores, volumes, dimensioned SVG and PDF."
+    "Browser exports verified: sharp, root-rounded and fully blended STEP solids, bores, volumes, dimensioned SVG and PDF."
 )

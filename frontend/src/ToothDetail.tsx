@@ -33,7 +33,7 @@ export default function ToothDetail({ result }: { result: Analysis }) {
   const pitchAngle = (2 * Math.PI) / g.teeth,
     half = d.halfThicknessAngle;
   const top = -ra - 2.4 * m,
-    bottom = Math.max(-Math.min(rf, rb) + 1.8 * m, top + 7.7 * m);
+    bottom = Math.max(-Math.min(rf, rb) + 1.8 * m, top + 8.6 * m);
   const edges = [...profileSegments(g, -1), ...profileSegments(g, 0)];
   const path = `M ${xy(segmentPoint(g, edges[0], 0))} ${edges.map((e) => edgePath(g, e)).join(' ')}`;
   const blue = '#1d5e9c',
@@ -181,8 +181,13 @@ export default function ToothDetail({ result }: { result: Analysis }) {
           </defs>
           <rect x={-5.4 * m} y={top} width={14.6 * m} height={bottom - top} fill="white" />
           <text x={-5 * m} y={top + 0.4 * m} fill={ink} fontSize={0.28 * m}>
-            DETAIL {selected + 1} · {g.root_fillet ? 'KRUHOVÉ ZAOBLENIE PÄTY' : 'BEZ ZAOBLENIA'} ·
-            mm
+            DETAIL {selected + 1} ·{' '}
+            {g.root_fillet
+              ? 'KRUHOVÉ ZAOBLENIE PÄTY'
+              : g.tip_fillet
+                ? 'ZAOBLENÁ HLAVA'
+                : 'BEZ ZAOBLENIA'}{' '}
+            · mm
           </text>
           <circle cx="0" cy="0" r={rf} fill="#eaf0f3" />
           <path d={`${path} L 0 0 Z`} fill="#eaf0f3" />
@@ -245,7 +250,7 @@ export default function ToothDetail({ result }: { result: Analysis }) {
             `α = ${fmt(result.parameters.pressure_angle)}°`,
             ...around(half - pressure / 2, 1.55 * m),
           )}
-          {g.root_fillet &&
+          {(g.root_fillet || g.tip_fillet) &&
             profileSegments(g, 0)
               .filter((e) => e.kind === 'arc' && Math.hypot(...e.center) > 1e-8)
               .map((e, i) => (
@@ -256,7 +261,7 @@ export default function ToothDetail({ result }: { result: Analysis }) {
                     stroke="#c86327"
                     strokeWidth={0.05 * m}
                   />
-                  {i === 0 && (
+                  {i === 0 && g.root_fillet && (
                     <>
                       <path
                         d={`M ${xy(segmentPoint(g, e, 0.5))} L ${-1.9 * m} ${-rf + 0.7 * m} H ${0.7 * m}`}
@@ -315,6 +320,12 @@ export default function ToothDetail({ result }: { result: Analysis }) {
             <text x={5.3 * m} y={top + 6.7 * m}>
               eᶠ = {fmt(d.rootSpace)}
             </text>
+            <text x={5.3 * m} y={top + 7.15 * m}>
+              R hlavy = {fmt(g.tip_fillet?.radius ?? 0)}
+            </text>
+            <text x={5.3 * m} y={top + 7.6 * m}>
+              R šírky = {fmt(g.face_radius)}
+            </text>
           </g>
           <text x={-5 * m} y={bottom - 0.45 * m} fill={ink} fontSize={0.2 * m}>
             s, e, p sú dĺžky oblúkov na rozstupovej kružnici. Kóty nie sú rozmery vytlačeného SVG.
@@ -340,6 +351,8 @@ export default function ToothDetail({ result }: { result: Analysis }) {
             ['hᶠ · výška päty', d.dedendum],
             ['h · celková výška', d.depth],
             ['R · polomer zaoblenia', d.radius],
+            ['Rₐ · zaoblenie hlavy', g.tip_fillet?.radius ?? 0],
+            ['Rᵦ · hrany po šírke', g.face_radius],
           ].map(([name, value]) => (
             <div key={name as string}>
               <dt>{name}</dt>
@@ -350,7 +363,7 @@ export default function ToothDetail({ result }: { result: Analysis }) {
         <p className="hint">
           Dr tu znamená rozstupový priemer; Df je pätný priemer. Kóty vychádzajú z analytického
           modelu. Evolventa v SVG je vzorkovaná, kruhové oblúky sú vektorové. Zaoblenie nie je
-          výrobná trochoida ani zaoblenie hrán po šírke.
+          výrobná trochoida. Ide o rez v strede šírky; zaoblenie hrán po šírke ukazuje 3D náhľad.
         </p>
       </div>
     </section>

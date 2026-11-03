@@ -21,6 +21,7 @@ cases = [
     ("30-degrees", {"pressure_angle": 30}),
     ("opposite-shifts", {"profile1": 0.2, "profile2": -0.2}),
     ("circular-root-blends", {"root_fillet": 1}),
+    ("tip-and-face-blends", {"root_fillet": 1, "tip_fillet": 1, "face_fillet": 1}),
     (
         "large-rounded-roots",
         {"root_fillet": 1, "teeth1": 80, "teeth2": 120, "bore1": 0, "bore2": 0},

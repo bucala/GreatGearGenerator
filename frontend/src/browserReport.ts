@@ -52,6 +52,11 @@ export function createReport(r: Analysis): Blob {
     'Proposed root radius [mm]',
     ...r.gears.map((g) => (g.root_fillet?.radius ?? 0).toFixed(3)),
   ]);
+  rows.push([
+    'Proposed tip radius [mm]',
+    ...r.gears.map((g) => (g.tip_fillet?.radius ?? 0).toFixed(3)),
+  ]);
+  rows.push(['Face edge radius [mm]', ...r.gears.map((g) => g.face_radius.toFixed(3))]);
   rows.forEach((row, i) => {
     if (i === 0) doc.setFillColor(24, 60, 65);
     else if (i % 2) doc.setFillColor(237, 244, 243);
@@ -78,7 +83,7 @@ export function createReport(r: Analysis): Blob {
   paragraph(r.checks.map((c, i) => `${labels[i]}: ${c.ok ? 'PASS' : 'FAIL'}`).join('; '));
   heading('Load estimates (same material on both gears)');
   paragraph(
-    `Input torque: ${p.torque.toFixed(3)} N m; E: ${p.elastic_modulus.toFixed(0)} MPa; Poisson ratio: ${p.poisson_ratio.toFixed(3)}. Tangential force: ${r.tangential_force.toFixed(2)} N. Hertz line-contact peak stress at working pitch point: ${r.hertz_mpa.toFixed(2)} MPa.`,
+    `Effective contact width: ${r.effective_width.toFixed(3)} mm; input torque: ${p.torque.toFixed(3)} N m; E: ${p.elastic_modulus.toFixed(0)} MPa; Poisson ratio: ${p.poisson_ratio.toFixed(3)}. Tangential force: ${r.tangential_force.toFixed(2)} N. Hertz line-contact peak stress at working pitch point: ${r.hertz_mpa.toFixed(2)} MPa.`,
   );
   paragraph(
     r.bending_mpa
@@ -87,7 +92,7 @@ export function createReport(r: Analysis): Blob {
   );
   heading('Scope and limitations');
   paragraph(
-    'Analytic involute equations; sampled preview. Browser STEP uses B-spline approximation of 65 analytic samples per flank, circular tip/root arcs and optional tangent circular root blends. R starts at 0.3m and is limited by geometry. No certified global deviation bound. Exact involute STEP and rack-generated trochoids are unsupported. Root blend strength benefits are not evaluated. No ISO 6336 / DIN 3990 certification, fatigue, dynamics, material allowables or safety factors. PASS refers only to the listed geometric checks.',
+    'Analytic involute equations; sampled preview. Browser STEP uses B-spline approximation of 65 analytic samples per flank, circular tip/root arcs and optional tangent circular root blends. R starts at 0.3m and is limited by geometry. No certified global deviation bound. Exact involute STEP and rack-generated trochoids are unsupported. Root/tip blends and face-edge fillets are proposed, not a manufacturing simulation. Edge fillets reduce the assumed contact width by 2R. Root blend strength benefits are not evaluated. No ISO 6336 / DIN 3990 certification, fatigue, dynamics, material allowables or safety factors. PASS refers only to the listed geometric checks.',
     8,
   );
   paragraph(

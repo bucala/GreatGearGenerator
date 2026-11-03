@@ -9,7 +9,9 @@ istej Surge domény; nie je potrebný platený backend ani externá CAD služba.
 
 CAD jadro (~23 MB pred kompresiou) sa načíta až pri prvom STEP exporte. Pri pomalom
 spojení trvá prvý export dlhšie. Po každom exporte sa worker ukončí a jeho pamäť
-uvoľní. Limit exportu je 120 sekúnd. Chyba načítania sa zobrazí používateľovi a
+uvoľní. Bežný export má limit 120 sekúnd, priestorové zaoblenie hrán 300 sekúnd
+(najviac 60 zubov/koleso). Jeho CAD náhľad a STEP používajú spoločné telesá;
+úspešný náhľad uchová dočasnú kópiu STEP pre rovnakú geometriu. Chyba načítania sa zobrazí používateľovi a
 export sa dá zopakovať. Jednovláknový WASM build nevyžaduje COOP/COEP.
 
 ## Automatický deployment z main

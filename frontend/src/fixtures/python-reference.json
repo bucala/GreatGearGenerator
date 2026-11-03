@@ -2,8 +2,11 @@
   {
     "name": "standard",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 24,
         "teeth2": 48,
@@ -21,6 +24,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 24,
           "profile_shift": 0,
           "pitch_diameter": 48,
@@ -82,6 +87,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 48,
           "profile_shift": 0,
           "pitch_diameter": 96,
@@ -147,7 +154,7 @@
       "reference_center_distance": 72.0,
       "tip_shortening": 0.0,
       "working_pressure_angle": 19.99999999999999,
-      "contact_ratio": 1.6747051481919788,
+      "contact_ratio": 1.6747051481919801,
       "output_rpm": 300.0,
       "tangential_force": 416.6666666666667,
       "hertz_mpa": 431.2753764923239,
@@ -194,8 +201,11 @@
   {
     "name": "khk-shifted",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 3.0,
         "teeth1": 12,
         "teeth2": 24,
@@ -213,6 +223,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 12,
           "profile_shift": 0.6,
           "pitch_diameter": 36.0,
@@ -274,6 +286,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 24,
           "profile_shift": 0.36,
           "pitch_diameter": 72.0,
@@ -383,8 +397,11 @@
   {
     "name": "undercut",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 10,
         "teeth2": 48,
@@ -402,6 +419,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 10,
           "profile_shift": 0,
           "pitch_diameter": 20,
@@ -463,6 +482,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 48,
           "profile_shift": 0,
           "pitch_diameter": 96,
@@ -528,7 +549,7 @@
       "reference_center_distance": 58.0,
       "tip_shortening": 0.0,
       "working_pressure_angle": 19.99999999999999,
-      "contact_ratio": 1.5584950491206058,
+      "contact_ratio": 1.5584950491206069,
       "output_rpm": 125.0,
       "tangential_force": 1000.0,
       "hertz_mpa": 928.9955918680585,
@@ -575,8 +596,11 @@
   {
     "name": "large-root-no-bore",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 80,
         "teeth2": 120,
@@ -594,6 +618,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 80,
           "profile_shift": 0,
           "pitch_diameter": 160,
@@ -655,6 +681,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 120,
           "profile_shift": 0,
           "pitch_diameter": 240,
@@ -767,8 +795,11 @@
   {
     "name": "small-module-zero-load",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 0.2,
         "teeth1": 24,
         "teeth2": 48,
@@ -786,6 +817,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 24,
           "profile_shift": 0,
           "pitch_diameter": 4.800000000000001,
@@ -847,6 +880,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 48,
           "profile_shift": 0,
           "pitch_diameter": 9.600000000000001,
@@ -912,7 +947,7 @@
       "reference_center_distance": 7.2,
       "tip_shortening": 0.0,
       "working_pressure_angle": 19.99999999999999,
-      "contact_ratio": 1.6747051481919764,
+      "contact_ratio": 1.6747051481919748,
       "output_rpm": 300.0,
       "tangential_force": 0.0,
       "hertz_mpa": 0.0,
@@ -959,8 +994,11 @@
   {
     "name": "30-degrees",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 24,
         "teeth2": 48,
@@ -978,6 +1016,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 24,
           "profile_shift": 0,
           "pitch_diameter": 48,
@@ -1039,6 +1079,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 48,
           "profile_shift": 0,
           "pitch_diameter": 96,
@@ -1148,8 +1190,11 @@
   {
     "name": "opposite-shifts",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 0,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 24,
         "teeth2": 48,
@@ -1167,6 +1212,8 @@
       "gears": [
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 24,
           "profile_shift": 0.2,
           "pitch_diameter": 48,
@@ -1228,6 +1275,8 @@
         },
         {
           "root_fillet": null,
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 48,
           "profile_shift": -0.2,
           "pitch_diameter": 96,
@@ -1293,7 +1342,7 @@
       "reference_center_distance": 72.0,
       "tip_shortening": 0.0,
       "working_pressure_angle": 19.99999999999999,
-      "contact_ratio": 1.6479888066969506,
+      "contact_ratio": 1.647988806696952,
       "output_rpm": 300.0,
       "tangential_force": 416.6666666666667,
       "hertz_mpa": 431.2753764923239,
@@ -1337,8 +1386,11 @@
   {
     "name": "circular-root-blends",
     "expected": {
+      "effective_width": 16,
       "parameters": {
         "root_fillet": 1,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 24,
         "teeth2": 48,
@@ -1371,6 +1423,8 @@
               -2.3069482537122803
             ]
           },
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 24,
           "profile_shift": 0,
           "pitch_diameter": 48,
@@ -1447,6 +1501,8 @@
               -2.6317911339529894
             ]
           },
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 48,
           "profile_shift": 0,
           "pitch_diameter": 96,
@@ -1512,7 +1568,7 @@
       "reference_center_distance": 72.0,
       "tip_shortening": 0.0,
       "working_pressure_angle": 19.99999999999999,
-      "contact_ratio": 1.6747051481919788,
+      "contact_ratio": 1.6747051481919801,
       "output_rpm": 300.0,
       "tangential_force": 416.6666666666667,
       "hertz_mpa": 431.2753764923239,
@@ -1557,10 +1613,272 @@
     }
   },
   {
-    "name": "large-rounded-roots",
+    "name": "tip-and-face-blends",
     "expected": {
+      "effective_width": 15.8,
       "parameters": {
         "root_fillet": 1,
+        "tip_fillet": 1,
+        "face_fillet": 1,
+        "module": 2,
+        "teeth1": 24,
+        "teeth2": 48,
+        "pressure_angle": 20,
+        "profile1": 0,
+        "profile2": 0,
+        "width": 16,
+        "bore1": 10,
+        "bore2": 16,
+        "torque": 10,
+        "rpm": 600,
+        "elastic_modulus": 210000,
+        "poisson_ratio": 0.3
+      },
+      "gears": [
+        {
+          "root_fillet": {
+            "radius": 0.6,
+            "t": 0,
+            "tangent": [
+              22.02057070250423,
+              -1.7732642036685948
+            ],
+            "center": [
+              21.972410030405694,
+              -2.3713282049786697
+            ],
+            "root": [
+              21.37587401148065,
+              -2.3069482537122803
+            ]
+          },
+          "tip_fillet": {
+            "radius": 0.2,
+            "t": 0.5644900062600927,
+            "tangent": [
+              25.88625697749756,
+              -0.770708629446372
+            ],
+            "center": [
+              25.79316825197235,
+              -0.5936931239670713
+            ],
+            "tip": [
+              25.993115292685314,
+              -0.5982953962458858
+            ]
+          },
+          "face_radius": 0.1,
+          "teeth": 24,
+          "profile_shift": 0,
+          "pitch_diameter": 48,
+          "base_diameter": 45.105245797723605,
+          "tip_diameter": 52.0,
+          "root_diameter": 43.0,
+          "bore": 10,
+          "base_half_angle": 0.0803542308171238,
+          "t_start": 0.0,
+          "t_end": 0.5736588345144531,
+          "min_teeth": 17.09726434082606,
+          "undercut": false,
+          "tip_thickness": 1.1966964213386535,
+          "outline_length": 2809,
+          "outline_samples": [
+            [
+              0,
+              [
+                21.375874011480654,
+                -2.3069482537122807
+              ]
+            ],
+            [
+              1,
+              [
+                21.389061611293265,
+                -2.2309550525632975
+              ]
+            ],
+            [
+              7,
+              [
+                21.65226063028328,
+                -1.863879329128838
+              ]
+            ],
+            [
+              20,
+              [
+                22.70428184641081,
+                -1.8071673239903394
+              ]
+            ],
+            [
+              1404,
+              [
+                -21.375874011480647,
+                2.306948253712286
+              ]
+            ],
+            [
+              2808,
+              [
+                21.375874011480647,
+                -2.306948253712298
+              ]
+            ]
+          ]
+        },
+        {
+          "root_fillet": {
+            "radius": 0.6,
+            "t": 0.1978719238061312,
+            "tangent": [
+              45.9330114272842,
+              -2.0732551963725987
+            ],
+            "center": [
+              46.02281823941357,
+              -2.666496071983139
+            ],
+            "root": [
+              45.42382277425851,
+              -2.6317911339529894
+            ]
+          },
+          "tip_fillet": {
+            "radius": 0.2,
+            "t": 0.47241104818399554,
+            "tangent": [
+              49.87826742237646,
+              -0.8256667125772846
+            ],
+            "center": [
+              49.795843036501026,
+              -0.6434409717691922
+            ],
+            "tip": [
+              49.99582634186851,
+              -0.6460250720574219
+            ]
+          },
+          "face_radius": 0.1,
+          "teeth": 48,
+          "profile_shift": 0,
+          "pitch_diameter": 96,
+          "base_diameter": 90.21049159544721,
+          "tip_diameter": 100.0,
+          "root_diameter": 91.0,
+          "bore": 16,
+          "base_half_angle": 0.04762930734223012,
+          "t_start": 0.13259068019705586,
+          "t_end": 0.4783443254124487,
+          "min_teeth": 17.09726434082606,
+          "undercut": false,
+          "tip_thickness": 1.2920860958191829,
+          "outline_length": 5521,
+          "outline_samples": [
+            [
+              0,
+              [
+                45.42382277425851,
+                -2.6317911339529894
+              ]
+            ],
+            [
+              1,
+              [
+                45.43161319539454,
+                -2.564140828216831
+              ]
+            ],
+            [
+              7,
+              [
+                45.628078696974704,
+                -2.2146324934163775
+              ]
+            ],
+            [
+              20,
+              [
+                46.75628935435589,
+                -1.9135345175921052
+              ]
+            ],
+            [
+              2760,
+              [
+                -45.42382277425851,
+                2.6317911339530173
+              ]
+            ],
+            [
+              5520,
+              [
+                45.42382277425851,
+                -2.631791133953063
+              ]
+            ]
+          ]
+        }
+      ],
+      "ratio": 2.0,
+      "center_distance": 72.0,
+      "reference_center_distance": 72.0,
+      "tip_shortening": 0.0,
+      "working_pressure_angle": 19.99999999999999,
+      "contact_ratio": 1.59435590487211,
+      "output_rpm": 300.0,
+      "tangential_force": 416.6666666666667,
+      "hertz_mpa": 433.99638377843104,
+      "bending_mpa": [
+        36.18290603733497,
+        31.08296790124071
+      ],
+      "checks": [
+        {
+          "name": "Podrezanie pastorka",
+          "ok": true,
+          "detail": "z₁ ≥ 17.10"
+        },
+        {
+          "name": "Podrezanie kolesa",
+          "ok": true,
+          "detail": "z₂ ≥ 17.10"
+        },
+        {
+          "name": "Evolventná interferencia",
+          "ok": true,
+          "detail": "Aktívny bok nad navrhovaným zaoblením päty"
+        },
+        {
+          "name": "Trvalý záber",
+          "ok": true,
+          "detail": "εα = 1.594 ≥ 1"
+        },
+        {
+          "name": "Hrúbka hlavy zuba",
+          "ok": true,
+          "detail": "Odporúčaná hrúbka ≥ 0,25 m"
+        }
+      ],
+      "geometry_ok": true,
+      "limitations": [
+        "Predbežný výpočet; nejde o overenie podľa ISO 6336 ani DIN 3990.",
+        "Navrhované kruhové zaoblenia päty nie sú výrobná trochoida; pevnostný účinok nie je overený.",
+        "Napätia sú odhady bez dynamických faktorov a bezpečnostného súčiniteľa.",
+        "STEP bez aproximácie nie je týmto CAD jadrom podporovaný."
+      ]
+    }
+  },
+  {
+    "name": "large-rounded-roots",
+    "expected": {
+      "effective_width": 16,
+      "parameters": {
+        "root_fillet": 1,
+        "tip_fillet": 0,
+        "face_fillet": 0,
         "module": 2,
         "teeth1": 80,
         "teeth2": 120,
@@ -1593,6 +1911,8 @@
               -2.743667693243677
             ]
           },
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 80,
           "profile_shift": 0,
           "pitch_diameter": 160,
@@ -1669,6 +1989,8 @@
               -2.7971850944158043
             ]
           },
+          "tip_fillet": null,
+          "face_radius": 0,
           "teeth": 120,
           "profile_shift": 0,
           "pitch_diameter": 240,

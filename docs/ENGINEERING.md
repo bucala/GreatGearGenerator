@@ -50,10 +50,33 @@ rt=sqrt(rf²+2rfR). Ak rt>rb, prechod sa dotýka evolventy pri parametri
 R. Pravá strana je zrkadlenie ľavej. Kruhové úseky sú v STEP a SVG skutočné oblúky;
 náhľad 3D ich vzorkuje. Výsledný R pre každé koleso uvádza rozhranie aj PDF.
 
-Zaoblenie pridáva materiál v päte, nemení rozstupový, hlavový, základný ani pätný
+Zaoblenie päty pridáva materiál v päte, nemení rozstupový, hlavový, základný ani pätný
 priemer. Nie je to simulácia výroby, generovaná trochoida, úprava hlavy ani
 zaoblenie hrán po šírke. Návrh nástroja, kvalita výroby a účinok R na koncentráciu
 napätia/únavu nie sú overené. Predbežný Lewisov odhad zostáva nominálny.
+
+### Hlava zuba a hrany po šírke
+
+`tip_fillet=1` pridáva konvexné kruhové prechody hlavy. Východiskový R je 0,1m,
+obmedzený zostávajúcou korunou a intervalom aktívnej evolventy. Stred kružnice
+leží dovnútra na normále boku a spĺňa |C|=ra−R. Dotyk s evolventou má parameter
+`t=(R+sqrt((ra−R)²−rb²))/rb`. Zachová sa hlavový priemer na korune, ale skráti
+sa aktívny bok a skutočná oblúková hrúbka koruny. Súčiniteľ záberu preto používa
+nový koniec aktívnej evolventy; kontakt na kruhovom prechode sa nezapočítava.
+
+`face_fillet=1` vyžaduje oba rovinné prechody, aby CAD obrys zostal súvislý.
+Rozhranie ich pri zapnutí tejto voľby zapne; vypnutie päty alebo hlavy vypne aj
+hrany po šírke. Podporované je najviac 60 zubov na koleso. Návrhový polomer je
+`min(0,05m; 0,1b; R_päty/2; R_hlavy/2)`. OpenCascade zaobľuje obvodové hrany oboch
+čiel vrátane otvorov. Neplatné teleso alebo zlyhanie CAD sa hlási ako chyba,
+nikdy sa potichu nenahradí ostrým modelom.
+
+3D náhľad tejto voľby je tessellácia toho istého CAD telesa ako STEP; nejde len
+o vizuálne vyhladenie. Výpočet beží vo worker vlákne s limitom 300 sekúnd a možno
+ho zrušiť zmenou geometrie. STEP z úspešného náhľadu sa uchová ako jedna dočasná
+kópia pre rovnaké geometrické parametre. Ďalší export tak nemusí opakovať fillet.
+Odhad napätí používa konzervatívnu strednú šírku `b_eff=b−2 max(R_hrán)`;
+nenahrádza tým priestorové rozdelenie zaťaženia ani pevnostnú analýzu.
 
 ### Kótovaný detail zuba a medzery
 
@@ -121,7 +144,7 @@ Neuvádzame neoverenú výrobnú presnosť. Exportuje sa jedno STEP s dvomi tele
 ## Prehliadačový runtime na Surge
 
 Frontend používa tie isté rovnice a hranice vstupov v `frontend/src/geometry.ts`.
-Deväť referenčných prípadov generovaných Python jadrom kontroluje skalárne hodnoty,
+Desať referenčných prípadov generovaných Python jadrom kontroluje skalárne hodnoty,
 geometrické kontroly a vzorky oboch profilov. PDF vytvára jsPDF.
 STEP generuje samostatný worker s Replicad/OpenCascade.js: B-spline aproximácia
 65 analytických bodov na bok (`tolerance=1e-7` pre aproximátor), kružnicové oblúky,

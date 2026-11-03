@@ -13,7 +13,7 @@ from .geometry import analyze
 from .models import Design, StepRequest
 from .report import report
 
-app = FastAPI(title="Great Gear Generator", version="0.3.0")
+app = FastAPI(title="Great Gear Generator", version="0.4.0")
 cad_lock = threading.Lock()
 logger = logging.getLogger(__name__)
 

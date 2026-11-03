@@ -3,7 +3,7 @@
  * See docs/ENGINEERING.md for the scope of these preliminary calculations.
  */
 import type { Analysis, Design, Gear } from './types';
-import { proposeRootFillet, roundedOutline } from './profile';
+import { proposeRootFillet, proposeTipFillet, roundedOutline } from './profile';
 
 const { PI, sin, cos, tan, atan, sqrt, max, hypot, abs } = Math;
 const radians = (angle: number) => (angle * PI) / 180;
@@ -16,6 +16,8 @@ export const polar = (radius: number, angle: number): Point2 => [
 
 const bounds: Record<keyof Design, [number, number]> = {
   root_fillet: [0, 1],
+  tip_fillet: [0, 1],
+  face_fillet: [0, 1],
   module: [0.2, 10],
   teeth1: [8, 120],
   teeth2: [8, 120],
@@ -32,14 +34,22 @@ const bounds: Record<keyof Design, [number, number]> = {
 };
 
 export function validate(p: Design) {
+  if (p.face_fillet && Math.max(p.teeth1, p.teeth2) > 60)
+    throw new Error('Zaoblenie hrán po šírke podporuje najviac 60 zubov na koleso.');
+  if (p.face_fillet && (!p.root_fillet || !p.tip_fillet))
+    throw new Error('Zaoblenie hrán po šírke vyžaduje zapnuté prechody päty aj hlavy.');
   for (const key of Object.keys(bounds) as (keyof Design)[]) {
     const [lo, hi] = bounds[key];
-    const value = key === 'root_fillet' ? (p[key] ?? 0) : p[key];
+    const value = key.endsWith('_fillet') ? (p[key] ?? 0) : p[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < lo || value > hi) {
       throw new Error(`${key}: zadajte hodnotu od ${lo} do ${hi}.`);
     }
   }
-  if (p.root_fillet !== undefined && !Number.isInteger(p.root_fillet))
+  if (
+    [p.root_fillet, p.tip_fillet, p.face_fillet].some(
+      (v) => v !== undefined && !Number.isInteger(v),
+    )
+  )
     throw new Error('Vyberte model bez zaoblenia alebo s navrhovaným zaoblením.');
   if (!Number.isInteger(p.teeth1) || !Number.isInteger(p.teeth2)) {
     throw new Error('Počet zubov musí byť celé číslo.');
@@ -98,6 +108,9 @@ function gear(
   k: number,
   bore: number,
   round: boolean,
+  head: boolean,
+  width: number,
+  face: boolean,
 ): Gear {
   const d = m * z,
     db = d * cos(alpha);
@@ -116,6 +129,8 @@ function gear(
     throw new Error('Korekcia vytvára špicatý zub alebo prekrývajúce sa päty zubov.');
   const g: Gear = {
     root_fillet: null,
+    tip_fillet: null,
+    face_radius: 0,
     teeth: z,
     profile_shift: x,
     pitch_diameter: d,
@@ -132,7 +147,18 @@ function gear(
     outline: [],
   };
   if (round) g.root_fillet = proposeRootFillet(g, m);
-  g.outline = round ? roundedOutline(g) : outline(g);
+  if (head) {
+    g.tip_fillet = proposeTipFillet(g, m);
+    g.tip_thickness = -da * Math.atan2(g.tip_fillet.tip[1], g.tip_fillet.tip[0]);
+  }
+  if (face)
+    g.face_radius = Math.min(
+      0.05 * m,
+      0.1 * width,
+      0.5 * g.root_fillet!.radius,
+      0.5 * g.tip_fillet!.radius,
+    );
+  g.outline = round || head ? roundedOutline(g) : outline(g);
   return g;
 }
 
@@ -144,13 +170,35 @@ export function calculate(p: Design): Analysis {
   const a0 = (p.module * (p.teeth1 + p.teeth2)) / 2;
   const a = (a0 * cos(alpha)) / cos(aw);
   const k = xsum - (a - a0) / p.module;
-  const g1 = gear(p.module, p.teeth1, alpha, p.profile1, k, p.bore1, !!p.root_fillet);
-  const g2 = gear(p.module, p.teeth2, alpha, p.profile2, k, p.bore2, !!p.root_fillet);
+  const g1 = gear(
+    p.module,
+    p.teeth1,
+    alpha,
+    p.profile1,
+    k,
+    p.bore1,
+    !!p.root_fillet,
+    !!p.tip_fillet,
+    p.width,
+    !!p.face_fillet,
+  );
+  const g2 = gear(
+    p.module,
+    p.teeth2,
+    alpha,
+    p.profile2,
+    k,
+    p.bore2,
+    !!p.root_fillet,
+    !!p.tip_fillet,
+    p.width,
+    !!p.face_fillet,
+  );
   const gears: [Gear, Gear] = [g1, g2];
   const rb1 = g1.base_diameter / 2,
     rb2 = g2.base_diameter / 2;
-  const q1 = sqrt((g1.tip_diameter / 2) ** 2 - rb1 ** 2);
-  const q2 = sqrt((g2.tip_diameter / 2) ** 2 - rb2 ** 2);
+  const q1 = rb1 * (g1.tip_fillet?.t ?? g1.t_end);
+  const q2 = rb2 * (g2.tip_fillet?.t ?? g2.t_end);
   const span = a * sin(aw);
   const contactRatio = (q1 + q2 - span) / (PI * p.module * cos(alpha));
   const start1 = rb1 * (g1.root_fillet?.t ?? g1.t_start);
@@ -162,11 +210,12 @@ export function calculate(p: Design): Analysis {
   const fn = ft / cos(aw);
   const req = (rw1 * sin(aw) * rw2 * sin(aw)) / ((rw1 + rw2) * sin(aw));
   const effectiveE = p.elastic_modulus / (2 * (1 - p.poisson_ratio ** 2));
-  const hertz = sqrt((fn * effectiveE) / (PI * p.width * req));
+  const effectiveWidth = p.width - 2 * Math.max(g1.face_radius, g2.face_radius);
+  const hertz = sqrt((fn * effectiveE) / (PI * effectiveWidth * req));
   const lewisValid =
     abs(p.pressure_angle - 20) < 1e-9 && abs(p.profile1) < 1e-9 && abs(p.profile2) < 1e-9;
   const bending = lewisValid
-    ? gears.map((g) => ft / (p.width * p.module * (0.484 - 2.87 / g.teeth)))
+    ? gears.map((g) => ft / (effectiveWidth * p.module * (0.484 - 2.87 / g.teeth)))
     : null;
   const checks = [
     { name: 'Podrezanie pastorka', ok: !g1.undercut, detail: `z₁ ≥ ${g1.min_teeth.toFixed(2)}` },
@@ -186,6 +235,7 @@ export function calculate(p: Design): Analysis {
     },
   ];
   return {
+    effective_width: effectiveWidth,
     parameters: { ...p },
     gears,
     ratio: p.teeth2 / p.teeth1,

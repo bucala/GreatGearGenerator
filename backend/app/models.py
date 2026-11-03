@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class Design(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     root_fillet: int = Field(default=0, ge=0, le=1, strict=True)
+    tip_fillet: int = Field(default=0, ge=0, le=1, strict=True)
+    face_fillet: int = Field(default=0, ge=0, le=1, strict=True)
 
     module: float = Field(default=2, ge=0.2, le=10)
     teeth1: int = Field(default=24, ge=8, le=120, strict=True)

@@ -1,6 +1,6 @@
 [project]
 name = "great-gear-generator"
-version = "0.3.0"
+version = "0.4.0"
 description = "Parametric spur gear design workbench"
 requires-python = ">=3.11,<3.14"
 dependencies = [

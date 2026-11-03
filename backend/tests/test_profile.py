@@ -7,6 +7,20 @@ from backend.app.models import Design
 from backend.app.profile import segment_point, segments
 
 
+def test_tip_and_face_blends_shorten_contact_and_preserve_reference_circles():
+    original = analyze(Design(root_fillet=1))
+    result = analyze(Design(root_fillet=1, tip_fillet=1, face_fillet=1))
+    assert result["geometry_ok"]
+    assert result["contact_ratio"] < original["contact_ratio"]
+    assert isclose(result["effective_width"], 15.8)
+    for g, old in zip(result["gears"], original["gears"]):
+        f = g["tip_fillet"]
+        assert isclose(hypot(*f["center"]), g["tip_diameter"] / 2 - f["radius"], abs_tol=1e-9)
+        assert isclose(hypot(*f["tip"]), g["tip_diameter"] / 2, abs_tol=1e-9)
+        assert g["tip_thickness"] < old["tip_thickness"]
+        assert isclose(g["face_radius"], 0.1)
+
+
 @pytest.mark.parametrize(
     "parameters",
     [

@@ -60,6 +60,16 @@ def report(result: dict) -> bytes:
             for g in result["gears"]
         ]
     )
+    rows.append(
+        ["Proposed tip radius [mm]"]
+        + [
+            f"{g['tip_fillet']['radius']:.3f}" if g.get("tip_fillet") else "0.000"
+            for g in result["gears"]
+        ]
+    )
+    rows.append(
+        ["Face edge radius [mm]"] + [f"{g.get('face_radius', 0):.3f}" for g in result["gears"]]
+    )
     table = Table(rows, colWidths=[86 * mm, 44 * mm, 44 * mm])
     table.setStyle(
         TableStyle(
@@ -96,7 +106,7 @@ def report(result: dict) -> bytes:
     )
     para("Load estimates (same material on both gears)", "Heading2")
     para(
-        f"Input torque: {p['torque']:.3f} N m; E: {p['elastic_modulus']:.0f} MPa; "
+        f"Effective contact width: {result['effective_width']:.3f} mm; input torque: {p['torque']:.3f} N m; E: {p['elastic_modulus']:.0f} MPa; "
         f"Poisson ratio: {p['poisson_ratio']:.3f}. Tangential force: {result['tangential_force']:.2f} N. "
         f"Hertz line-contact peak stress at working pitch point: {result['hertz_mpa']:.2f} MPa."
     )
@@ -115,7 +125,8 @@ def report(result: dict) -> bytes:
         "B-splines through 65 points per flank (no certified global error bound). Exact involute "
         "STEP is unsupported. Root transitions are radial or tangent circular design blends, "
         "starting at R=0.3m and limited by geometry. They are not rack-generated trochoids; "
-        "root blend strength benefits are not evaluated. "
+        "tip/face blends are optional; width for stress estimates excludes 2R at the edges. "
+        "Root blend strength benefits are not evaluated. "
         "No ISO 6336 / DIN 3990 certification, material allowables, fatigue, dynamic factors, "
         "backlash or safety factors are evaluated. Undercut geometry is not simulated. "
         "PASS refers only to the listed preliminary geometric checks."

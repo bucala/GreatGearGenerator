@@ -1,5 +1,7 @@
 export type Design = {
   root_fillet?: number;
+  tip_fillet?: number;
+  face_fillet?: number;
   module: number;
   teeth1: number;
   teeth2: number;
@@ -16,6 +18,8 @@ export type Design = {
 };
 export const defaults: Design = {
   root_fillet: 0,
+  tip_fillet: 0,
+  face_fillet: 0,
   module: 2,
   teeth1: 24,
   teeth2: 48,
@@ -32,6 +36,8 @@ export const defaults: Design = {
 };
 export type Gear = {
   root_fillet: RootFillet | null;
+  tip_fillet: TipFillet | null;
+  face_radius: number;
   teeth: number;
   profile_shift: number;
   pitch_diameter: number;
@@ -54,7 +60,15 @@ export type RootFillet = {
   root: [number, number];
   tangent: [number, number];
 };
+export type TipFillet = {
+  radius: number;
+  t: number;
+  center: [number, number];
+  tip: [number, number];
+  tangent: [number, number];
+};
 export type Analysis = {
+  effective_width: number;
   parameters: Design;
   gears: [Gear, Gear];
   center_distance: number;

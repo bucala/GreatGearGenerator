@@ -30,6 +30,10 @@ def build_gear(g: dict, width: float) -> cq.Solid:
         [cq.Wire.makeCircle(g["bore"] / 2, cq.Vector(), cq.Vector(0, 0, 1))] if g["bore"] else []
     )
     solid = cq.Solid.extrudeLinear(wire, holes, cq.Vector(0, 0, width))
+    if g.get("face_radius", 0):
+        solid = solid.fillet(
+            g["face_radius"], [e for e in solid.Edges() if e.BoundingBox().zlen < 1e-6]
+        )
     if not solid.isValid() or solid.Volume() <= 0:
         raise ValueError("CAD jadro nevytvorilo platné teleso.")
     return solid

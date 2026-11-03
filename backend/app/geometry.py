@@ -4,10 +4,10 @@ Dimension and profile-shift equations follow KHK / SDP-SI technical references.
 See docs/ENGINEERING.md for equations, assumptions and limits of every check.
 """
 
-from math import atan, cos, degrees, hypot, pi, radians, sin, sqrt, tan
+from math import atan, atan2, cos, degrees, hypot, pi, radians, sin, sqrt, tan
 
 from .models import Design
-from .profile import proposed_fillet, rounded_outline
+from .profile import proposed_fillet, proposed_tip_fillet, rounded_outline
 
 
 def involute(t: float, rb: float) -> tuple[float, float]:
@@ -73,7 +73,16 @@ def outline(g: dict, samples: int = 14) -> list[tuple[float, float]]:
 
 
 def gear(
-    m: float, z: int, alpha: float, x: float, k: float, bore: float, rounding: bool = False
+    m: float,
+    z: int,
+    alpha: float,
+    x: float,
+    k: float,
+    bore: float,
+    rounding: bool = False,
+    head: bool = False,
+    face: bool = False,
+    width: float = 16,
 ) -> dict:
     d = m * z
     db = d * cos(alpha)
@@ -92,6 +101,8 @@ def gear(
         raise ValueError("Korekcia vytvára špicatý zub alebo prekrývajúce sa päty zubov.")
     g = {
         "root_fillet": None,
+        "tip_fillet": None,
+        "face_radius": min(0.05 * m, 0.1 * width) if face else 0,
         "teeth": z,
         "profile_shift": x,
         "pitch_diameter": d,
@@ -108,11 +119,22 @@ def gear(
     }
     if rounding:
         g["root_fillet"] = proposed_fillet(g, m)
-    g["outline"] = rounded_outline(g) if rounding else outline(g)
+    if head:
+        g["tip_fillet"] = proposed_tip_fillet(g, m)
+        g["tip_thickness"] = -da * atan2(g["tip_fillet"]["tip"][1], g["tip_fillet"]["tip"][0])
+    if face:
+        g["face_radius"] = min(
+            0.05 * m, 0.1 * width, 0.5 * g["root_fillet"]["radius"], 0.5 * g["tip_fillet"]["radius"]
+        )
+    g["outline"] = rounded_outline(g) if rounding or head else outline(g)
     return g
 
 
 def analyze(p: Design) -> dict:
+    if p.face_fillet and max(p.teeth1, p.teeth2) > 60:
+        raise ValueError("Zaoblenie hrán po šírke podporuje najviac 60 zubov.")
+    if p.face_fillet and (not p.root_fillet or not p.tip_fillet):
+        raise ValueError("Zaoblenie hrán po šírke vyžaduje prechody päty aj hlavy.")
     alpha = radians(p.pressure_angle)
     xsum = p.profile1 + p.profile2
     aw = inverse_inv(inv(alpha) + 2 * xsum * tan(alpha) / (p.teeth1 + p.teeth2))
@@ -122,13 +144,24 @@ def analyze(p: Design) -> dict:
     y = (a - a0) / p.module
     k = xsum - y
     gears = [
-        gear(p.module, z, alpha, x, k, bore, bool(p.root_fillet))
+        gear(
+            p.module,
+            z,
+            alpha,
+            x,
+            k,
+            bore,
+            bool(p.root_fillet),
+            bool(p.tip_fillet),
+            bool(p.face_fillet),
+            p.width,
+        )
         for z, x, bore in ((p.teeth1, p.profile1, p.bore1), (p.teeth2, p.profile2, p.bore2))
     ]
     g1, g2 = gears
     rb1, rb2 = g1["base_diameter"] / 2, g2["base_diameter"] / 2
-    ra1, ra2 = g1["tip_diameter"] / 2, g2["tip_diameter"] / 2
-    q1, q2 = sqrt(ra1**2 - rb1**2), sqrt(ra2**2 - rb2**2)
+    q1 = rb1 * (g1["tip_fillet"]["t"] if g1["tip_fillet"] else g1["t_end"])
+    q2 = rb2 * (g2["tip_fillet"]["t"] if g2["tip_fillet"] else g2["t_end"])
     span = a * sin(aw)
     contact_ratio = (q1 + q2 - span) / (pi * p.module * cos(alpha))
     # End of each active involute must remain above the partner's involute start.
@@ -140,13 +173,14 @@ def analyze(p: Design) -> dict:
     fn = ft / cos(aw)
     req = (rw1 * sin(aw)) * (rw2 * sin(aw)) / ((rw1 + rw2) * sin(aw))
     effective_e = p.elastic_modulus / (2 * (1 - p.poisson_ratio**2))
-    hertz = sqrt(fn * effective_e / (pi * p.width * req))
+    effective_width = p.width - 2 * max(g1["face_radius"], g2["face_radius"])
+    hertz = sqrt(fn * effective_e / (pi * effective_width * req))
     # Lewis approximation for unshifted 20-degree full-depth teeth only.
     lewis_valid = (
         abs(p.pressure_angle - 20) < 1e-9 and abs(p.profile1) < 1e-9 and abs(p.profile2) < 1e-9
     )
     bending = (
-        [ft / (p.width * p.module * (0.484 - 2.87 / g["teeth"])) for g in gears]
+        [ft / (effective_width * p.module * (0.484 - 2.87 / g["teeth"])) for g in gears]
         if lewis_valid
         else None
     )
@@ -180,6 +214,7 @@ def analyze(p: Design) -> dict:
         },
     ]
     return {
+        "effective_width": effective_width,
         "parameters": p.model_dump(),
         "gears": gears,
         "ratio": p.teeth2 / p.teeth1,

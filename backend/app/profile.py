@@ -45,17 +45,57 @@ def proposed_fillet(g: dict, module: float) -> dict:
     return construct(radius)
 
 
+def proposed_tip_fillet(g: dict, module: float) -> dict:
+    from .geometry import flank
+
+    ra, rb = g["tip_diameter"] / 2, g["base_diameter"] / 2
+    start = g["root_fillet"]["t"] if g.get("root_fillet") else g["t_start"]
+
+    def construct(radius):
+        if ra - radius <= rb:
+            return None
+        t = (radius + sqrt((ra - radius) ** 2 - rb**2)) / rb
+        tangent = flank(g, 0, -1, t)
+        angle = t - g["base_half_angle"] - pi / 2
+        center = (tangent[0] - radius * cos(angle), tangent[1] - radius * sin(angle))
+        tip = (center[0] * ra / (ra - radius), center[1] * ra / (ra - radius))
+        return {"radius": radius, "t": t, "tangent": tangent, "center": center, "tip": tip}
+
+    def fits(f):
+        return (
+            f is not None
+            and f["tip"][1] < -1e-7 * module
+            and f["t"] > start + 0.35 * (g["t_end"] - start)
+        )
+
+    radius = 0.1 * module
+    if not fits(construct(radius)):
+        lo, hi = 0, radius
+        for _ in range(50):
+            mid = (lo + hi) / 2
+            if fits(construct(mid)):
+                lo = mid
+            else:
+                hi = mid
+        radius = lo * 0.98
+    if radius < 1e-5 * module:
+        raise ValueError("Nemožno navrhnúť zaoblenie hlavy; vypnite túto voľbu.")
+    return construct(radius)
+
+
 def segments(g: dict, tooth: int | None = None) -> list[dict]:
     from .geometry import flank, polar
 
     edges = []
     rf, ra = g["root_diameter"] / 2, g["tip_diameter"] / 2
     f = g.get("root_fillet")
-    t0, t1 = f["t"] if f else g["t_start"], g["t_end"]
+    tip = g.get("tip_fillet")
+    t0, t1 = f["t"] if f else g["t_start"], tip["t"] if tip else g["t_end"]
     h0 = g["base_half_angle"] - (t0 - atan(t0))
     h1 = g["base_half_angle"] - (t1 - atan(t1))
     pitch = 2 * pi / g["teeth"]
     root_angle = -atan2(f["root"][1], f["root"][0]) if f else h0
+    tip_angle = -atan2(tip["tip"][1], tip["tip"][0]) if tip else h1
 
     def rotate(p, a):
         return p[0] * cos(a) - p[1] * sin(a), p[0] * sin(a) + p[1] * cos(a)
@@ -85,6 +125,22 @@ def segments(g: dict, tooth: int | None = None) -> list[dict]:
             }
         )
 
+    def head_blend(center, start, end):
+        angle = atan2(start[1] - center[1], start[0] - center[0])
+        sweep = atan2(end[1] - center[1], end[0] - center[0]) - angle
+        while sweep <= 0:
+            sweep += 2 * pi
+        edges.append(
+            {
+                "kind": "arc",
+                "center": center,
+                "radius": tip["radius"],
+                "from": angle,
+                "sweep": sweep,
+                "samples": 12,
+            }
+        )
+
     for i in range(g["teeth"]) if tooth is None else [tooth]:
         a = i * pitch
         if f:
@@ -93,16 +149,24 @@ def segments(g: dict, tooth: int | None = None) -> list[dict]:
         else:
             line(polar(rf, a - h0), flank(g, a, -1, t0))
         edges.append({"kind": "involute", "angle": a, "side": -1, "from": t0, "to": t1})
+        if tip:
+            head_blend(rotate(tip["center"], a), rotate(tip["tangent"], a), rotate(tip["tip"], a))
         edges.append(
             {
                 "kind": "arc",
                 "center": (0, 0),
                 "radius": ra,
-                "from": a - h1,
-                "sweep": 2 * h1,
+                "from": a - tip_angle,
+                "sweep": 2 * tip_angle,
                 "samples": 5,
             }
         )
+        if tip:
+            head_blend(
+                rotate(mirror(tip["center"]), a),
+                rotate(mirror(tip["tip"]), a),
+                rotate(mirror(tip["tangent"]), a),
+            )
         edges.append({"kind": "involute", "angle": a, "side": 1, "from": t1, "to": t0})
         if f:
             line(flank(g, a, 1, t0), rotate(mirror(f["tangent"]), a))

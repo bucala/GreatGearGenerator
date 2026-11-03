@@ -1,5 +1,6 @@
 import { calculate } from './geometry';
 import type { Design } from './types';
+import { cachedStep } from './browserMesh';
 
 export function generateStep(
   design: Design,
@@ -15,11 +16,16 @@ export function generateStep(
     return Promise.reject(
       new Error('STEP je blokovaný: návrh neprešiel geometrickými kontrolami.'),
     );
+  const cached = design.face_fillet ? cachedStep(design) : null;
+  if (cached) return Promise.resolve(cached);
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./cad.worker.ts', import.meta.url), { type: 'module' });
     const timeout = setTimeout(
-      () => finish(new Error('CAD export prekročil časový limit 120 sekúnd.')),
-      120000,
+      () =>
+        finish(
+          new Error(`CAD export prekročil časový limit ${design.face_fillet ? 300 : 120} sekúnd.`),
+        ),
+      design.face_fillet ? 300000 : 120000,
     );
     function finish(error?: Error, blob?: Blob) {
       clearTimeout(timeout);

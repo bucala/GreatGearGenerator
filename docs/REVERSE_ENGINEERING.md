@@ -21,6 +21,8 @@ Nezmerané otvory sa pri prenose nastavia na nulu, šírka na 16 mm. Materiál a
 
 Identifikácia neurčuje polomer zaoblenia z reálneho skenu. Prenesený kandidát začína bez zaoblenia; v návrhu možno následne zvoliť navrhovaný kruhový prechod ako konštrukčnú úpravu.
 
+Pri zaoblených hranách po šírke merajte profilové priemery v strednej rovine ozubenia, nie na zaoblenom čele. Zaoblenie čela môže zmeniť nameraný hlavový aj pätný obrys na okraji. Polomery päty, hlavy ani hrán po šírke sa z týchto priemerov automaticky neidentifikujú.
+
 ## Výpočtový model
 
 Rovnaké predpoklady ako pri priamom návrhu: vonkajšie čelné evolventné ozubenie, `ha*=1`, `hf*=1,25`, bez vôle, opotrebenia, trochoidnej päty a samostatnej výrobnej úpravy hlavy.

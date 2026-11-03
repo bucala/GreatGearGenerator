@@ -142,7 +142,7 @@ Kliknutie na hlavný náhľad otvorí aplikáciu. Ďalšie pohľady rozbalíte n
 
 **Reverzný návrh zo skenu:** z počtu zubov a nameraných priemerov nájde prípustné kandidáty modulu, uhla a korekcie vrátane tolerancie a porovnania odchýlok. Podporuje samostatné koleso aj pár so známou nominálnou osovou vzdialenosťou a prenos kandidáta do 2D/3D návrhu. Merania nemusia určovať jediné riešenie. [Postup, rovnice a obmedzenia →](docs/REVERSE_ENGINEERING.md)
 
-**Model päty a detail zuba:** prepínač bez zaoblenia / s navrhovaným kruhovým zaoblením mení 2D, 3D aj STEP. Zväčšený detail zuba a medzery pre obe kolesá obsahuje analytické kóty priemerov, rozstupu, hrúbky, výšok a polomeru päty; možno ho stiahnuť ako SVG. Navrhovaný prechod nie je výrobná trochoida ani zaoblenie hrán po šírke.
+**Model päty a detail zuba:** prepínač bez zaoblenia / s navrhovaným kruhovým zaoblením mení 2D, 3D aj STEP. Zväčšený detail zuba a medzery pre obe kolesá obsahuje analytické kóty priemerov, rozstupu, hrúbky, výšok a polomeru päty; možno ho stiahnuť ako SVG. Samostatne sa dá zapnúť aj hlava zuba a priestorové zaoblenie hrán po šírke (to zapne aj oba rovinné prechody). Navrhované polomery nie sú výrobná trochoida.
 
 | Návrh | Výsledok |
 | --- | --- |
@@ -162,7 +162,7 @@ B-spline aproximáciu 65 analytických bodov na bok, kružnicové oblúky a radi
 pätu alebo voliteľný dotyčnicový kruhový prechod. Exaktný STEP bez spline aproximácie nie je implementovaný. Nie je
 certifikovaná globálna hranica geometrickej odchýlky.
 
-Výrobná trochoida, podrezaná päta, zaoblenie hlavy/hrán po šírke ani vôľa nie sú modelované.
+Výrobná trochoida, podrezaná päta a vôľa nie sú modelované.
 Zaťažovacie odhady nezahŕňajú únavu, dynamiku ani bezpečnostné súčinitele.
 Neplatný návrh blokuje STEP export. PDF zostáva dostupné aj pre nevyhovujúci návrh.
 
