@@ -1,8 +1,10 @@
 name: Deploy to Surge
 run-name: Deploy main to Surge by @${{ github.actor }}
 
-# Publishing is deliberate: pushes and pull requests only run Verify.
+# Only main publishes; feature branches and pull requests run Verify separately.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +19,8 @@ jobs:
     name: Test and build
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
+    with:
+      publish_artifact: true
 
   deploy:
     name: Publish and verify production

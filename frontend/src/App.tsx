@@ -22,6 +22,7 @@ import { analyze, browserRuntime, download } from './api';
 import { defaults, type Analysis, type Design } from './types';
 import Sketch from './Sketch';
 import ReverseEngineering from './ReverseEngineering';
+import { version } from '../package.json';
 
 const Scene = lazy(() => import('./Scene'));
 type Draft = Record<keyof Design, string>;
@@ -189,7 +190,8 @@ export default function App() {
           </span>
         </a>
         <div className="top-middle">
-          <span className="tiny-dot" /> Engineering workspace <span className="version">v0.1</span>
+          <span className="tiny-dot" /> Engineering workspace{' '}
+          <span className="version">v{version}</span>
         </div>
         <button
           className="icon-button"

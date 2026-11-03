@@ -69,7 +69,7 @@ OpenAPI: http://127.0.0.1:8000/docs. Pri vývoji Vite proxuje `/api` na port 800
 
 ## Deployment
 
-**Na vyžiadanie, bez automatického publikovania pri pushi.**
+**Automaticky po pushi alebo zlúčení do `main`, až po úspešných kontrolách.** Vetvy s rozpracovanými zmenami a pull requesty sa nepublikujú. Manuálny deployment zostáva dostupný:
 
 1. Otvorte **[Deploy to Surge](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml)**.
 2. Kliknite na **Run workflow**, vyberte **main** a spustite ho.
@@ -77,7 +77,7 @@ OpenAPI: http://127.0.0.1:8000/docs. Pri vývoji Vite proxuje `/api` na port 800
 
 ```mermaid
 flowchart LR
-    A[Run workflow] --> B[Testy a build]
+    A[Push do main alebo Run workflow] --> B[Testy a build]
     B --> C[Kontrola STEP a PDF]
     C --> D[Publikovanie otestovaného buildu]
     D --> E[Kontrola verzie cez HTTPS]

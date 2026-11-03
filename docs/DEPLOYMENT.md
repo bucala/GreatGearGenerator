@@ -12,7 +12,11 @@ spojení trvá prvý export dlhšie. Po každom exporte sa worker ukončí a jeh
 uvoľní. Limit exportu je 120 sekúnd. Chyba načítania sa zobrazí používateľovi a
 export sa dá zopakovať. Jednovláknový WASM build nevyžaduje COOP/COEP.
 
-## Automatický deployment na vyžiadanie
+## Automatický deployment z main
+
+Každý push alebo zlúčenie do `main` automaticky spustí **Deploy to Surge**.
+Pred publikovaním musia prejsť testy, build, E2E a overenie exportov. Pracovné
+vetvy ani pull requesty sa nepublikujú. Ručné opakovanie nasadenia zostáva dostupné:
 
 Otvorte [Deploy to Surge v GitHub Actions](https://github.com/bucala/GreatGearGenerator/actions/workflows/deploy.yml),
 kliknite na **Run workflow**, vyberte **main** a spustite ho. Alebo:
@@ -22,11 +26,14 @@ gh workflow run deploy.yml --repo bucala/GreatGearGenerator --ref main
 ```
 
 Z `frontend` možno použiť aj `npm run deploy:request`. Vyžaduje prihlásený GitHub
-CLI; lokálny Surge účet ani build nie sú potrebné. Push a pull request spúšťajú
-iba kontroly. Deployment sa spúšťa výhradne manuálne a iba z vetvy `main`.
+CLI; lokálny Surge účet ani build nie sú potrebné. Pracovné vetvy a pull requesty
+spúšťajú iba kontroly. Produkčný deployment je automatický po zmene `main`,
+prípadne manuálny cez **Run workflow**, vždy iba z vetvy `main`.
 
 Workflow opätovne použije `ci.yml`: testy, build, E2E a overenie exportov. Uloží
-otestované `frontend/dist` ako artefakt s názvom obsahujúcim commit SHA. Deploy
+otestované `frontend/dist` ako artefakt s názvom obsahujúcim commit SHA. Uloženie
+artefaktu riadi explicitný vstup `publish_artifact` pri volaní reusable workflow;
+funguje rovnako pri automatickom aj manuálnom spustení. Deploy
 job použije tento istý artefakt bez nového zostavenia. Po publikovaní overí
 `build-info.json` cez HTTPS, spustí E2E proti produkcii a skontroluje stiahnuté
 STEP/PDF cez Python. Súhrn behu obsahuje URL, commit a výsledok; artefakty obsahujú
