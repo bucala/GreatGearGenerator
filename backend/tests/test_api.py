@@ -35,6 +35,19 @@ def test_health_and_default_analysis():
         {"root_fillet": 2},
         {"root_fillet": 0.5},
         {"torque": "Infinity"},
+        {"manual_radii": 0.5},
+        {"manual_radii": 1, "root_fillet": 1, "root_radius": 0},
+        {"manual_radii": 1, "root_fillet": 1, "root_radius": 100},
+        {"manual_radii": 1, "tip_fillet": 1, "tip_radius": 100},
+        {
+            "manual_radii": 1,
+            "root_fillet": 1,
+            "tip_fillet": 1,
+            "face_fillet": 1,
+            "root_radius": 0.4,
+            "tip_radius": 0.12,
+            "face_radius": 0.2,
+        },
     ],
 )
 def test_bad_parameters_return_validation_error(invalid):

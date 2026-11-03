@@ -49,11 +49,11 @@ export function createReport(r: Analysis): Blob {
   ] as const)
     rows.push([name, ...r.gears.map((g) => g[key].toFixed(3))]);
   rows.push([
-    'Proposed root radius [mm]',
+    'Root radius [mm]',
     ...r.gears.map((g) => (g.root_fillet?.radius ?? 0).toFixed(3)),
   ]);
   rows.push([
-    'Proposed tip radius [mm]',
+    'Tip radius [mm]',
     ...r.gears.map((g) => (g.tip_fillet?.radius ?? 0).toFixed(3)),
   ]);
   rows.push(['Face edge radius [mm]', ...r.gears.map((g) => g.face_radius.toFixed(3))]);

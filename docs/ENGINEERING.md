@@ -71,6 +71,17 @@ hrany po šírke. Podporované je najviac 60 zubov na koleso. Návrhový polomer
 čiel vrátane otvorov. Neplatné teleso alebo zlyhanie CAD sa hlási ako chyba,
 nikdy sa potichu nenahradí ostrým modelom.
 
+Voľba **Ručne zadať rádiusy** (`manual_radii=1`) používa `root_radius`, `tip_radius`
+a `face_radius` v mm, spoločné pre obe kolesá. Použijú sa iba pri zapnutom
+príslušnom zaoblení. Automatický režim zostáva predvolený; neaktívne vstupy sa
+v rozhraní ignorujú. Zapnuté ručné zaoblenia vyžadujú kladný rádus aspoň 10⁻⁵m.
+Ručné hodnoty sa nezmenšujú: päta musí zachovať oddelené medzery a aktívny bok,
+hlava zvyšnú korunu a aktívnu evolventu. R hrán nesmie prekročiť polovicu R päty
+ani polovicu R hlavy a musí byť menší než b/2. Neplatný vstup blokuje export.
+Rovnaké hodnoty používa TypeScript aj Python, 2D/3D, kótovaný SVG, PDF a STEP.
+CAD môže odmietnuť priestorové zaoblenie aj po analytickej kontrole; chyba sa
+zobrazí a model sa nenahradí iným rádusom.
+
 3D náhľad tejto voľby je tessellácia toho istého CAD telesa ako STEP; nejde len
 o vizuálne vyhladenie. Výpočet beží vo worker vlákne s limitom 300 sekúnd a možno
 ho zrušiť zmenou geometrie. STEP z úspešného náhľadu sa uchová ako jedna dočasná

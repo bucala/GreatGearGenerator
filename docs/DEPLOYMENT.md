@@ -128,7 +128,7 @@ uv run python scripts/verify_browser_exports.py
 Playwright spustí obyčajný statický server, otestuje rozhranie a stiahne skutočný
 STEP/PDF. Python následne otvorí STEP cez CadQuery, overí dve platné telesá,
 otvory, rozmery a objemy a skontroluje obsah PDF. Referenčné matematické testy
-porovnávajú prehliadač s výstupmi Python jadra pre sedem prípadov.
+porovnávajú prehliadač s výstupmi Python jadra pre jedenásť prípadov vrátane ručných rádiusov.
 Regenerácia dát: `uv run python scripts/generate_browser_fixtures.py`.
 
 Rovnaké E2E možno spustiť proti nasadeniu:

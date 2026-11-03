@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid, Html } from '@react-three/drei';
+import { OrbitControls, Grid } from '@react-three/drei';
 import { BufferGeometry, Float32BufferAttribute, ExtrudeGeometry, Mesh, Path, Shape } from 'three';
 import { generateMesh, type CadMesh } from './browserMesh';
 import type { Analysis, Gear } from './types';
@@ -133,13 +133,6 @@ export default function Scene({
         <ambientLight intensity={1.7} />
         <directionalLight position={[20, 100, 50]} intensity={3} />
         <directionalLight position={[-70, 30, -30]} intensity={2} color="#75d9e8" />
-        {!ready && (
-          <Html center>
-            <div className="cad-preview-message" role={error ? 'alert' : 'status'}>
-              {error || 'Vytváram CAD náhľad zaoblenia hrán…'}
-            </div>
-          </Html>
-        )}
         {ready && (
           <group rotation={[-Math.PI / 2, 0, 0]} scale={scale}>
             <GearMesh
@@ -185,6 +178,13 @@ export default function Scene({
           }}
         />
       </Canvas>
+      {!ready && (
+        <div className="cad-preview-overlay">
+          <div className="cad-preview-message" role={error ? 'alert' : 'status'}>
+            {error || 'Vytváram CAD náhľad zaoblenia hrán…'}
+          </div>
+        </div>
+      )}
       <ViewerZoomControls
         dimension="3D"
         zoom={zoom}

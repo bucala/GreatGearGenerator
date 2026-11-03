@@ -3,7 +3,7 @@
 from math import atan, atan2, cos, hypot, pi, sin, sqrt
 
 
-def proposed_fillet(g: dict, module: float) -> dict:
+def proposed_fillet(g: dict, module: float, requested: float | None = None) -> dict:
     from .geometry import flank, polar
 
     rf, rb = g["root_diameter"] / 2, g["base_diameter"] / 2
@@ -30,6 +30,14 @@ def proposed_fillet(g: dict, module: float) -> dict:
             and hypot(*f["tangent"]) < g["tip_diameter"] / 2
         )
 
+    if requested is not None:
+        f = construct(requested)
+        if requested < module * 1e-5 or not fits(f):
+            raise ValueError(
+                f"R päty = {requested} mm sa nezmestí do podporovanej geometrie "
+                f"kolesa z = {g['teeth']}. Zadajte menší kladný rádus."
+            )
+        return f
     radius = 0.3 * module
     if not fits(construct(radius)):
         lo, hi = 0, radius
@@ -45,7 +53,7 @@ def proposed_fillet(g: dict, module: float) -> dict:
     return construct(radius)
 
 
-def proposed_tip_fillet(g: dict, module: float) -> dict:
+def proposed_tip_fillet(g: dict, module: float, requested: float | None = None) -> dict:
     from .geometry import flank
 
     ra, rb = g["tip_diameter"] / 2, g["base_diameter"] / 2
@@ -68,6 +76,14 @@ def proposed_tip_fillet(g: dict, module: float) -> dict:
             and f["t"] > start + 0.35 * (g["t_end"] - start)
         )
 
+    if requested is not None:
+        f = construct(requested)
+        if requested < module * 1e-5 or not fits(f):
+            raise ValueError(
+                f"R hlavy = {requested} mm sa nezmestí do podporovanej geometrie "
+                f"kolesa z = {g['teeth']}. Zadajte menší kladný rádus."
+            )
+        return f
     radius = 0.1 * module
     if not fits(construct(radius)):
         lo, hi = 0, radius

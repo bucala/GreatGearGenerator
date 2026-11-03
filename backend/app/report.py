@@ -54,14 +54,14 @@ def report(result: dict) -> bytes:
     ]:
         rows.append([name] + [f"{g[key]:.3f}" for g in result["gears"]])
     rows.append(
-        ["Proposed root radius [mm]"]
+        ["Root radius [mm]"]
         + [
             f"{g['root_fillet']['radius']:.3f}" if g.get("root_fillet") else "0.000"
             for g in result["gears"]
         ]
     )
     rows.append(
-        ["Proposed tip radius [mm]"]
+        ["Tip radius [mm]"]
         + [
             f"{g['tip_fillet']['radius']:.3f}" if g.get("tip_fillet") else "0.000"
             for g in result["gears"]

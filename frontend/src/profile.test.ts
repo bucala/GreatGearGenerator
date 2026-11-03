@@ -5,6 +5,84 @@ import { profileSegments, segmentPoint } from './profile';
 import { toothDimensions } from './tooth';
 
 describe('tangent circular root blends', () => {
+  it('uses manual radii exactly and keeps the profile tangent and closed', () => {
+    const rounded = calculate({
+      ...defaults,
+      root_fillet: 1,
+      tip_fillet: 1,
+      face_fillet: 1,
+      manual_radii: 1,
+      root_radius: 0.4,
+      tip_radius: 0.12,
+      face_radius: 0.03,
+    });
+    expect(rounded.geometry_ok).toBe(true);
+    expect(rounded.effective_width).toBeCloseTo(15.94, 10);
+    for (const g of rounded.gears) {
+      expect(g.root_fillet!.radius).toBe(0.4);
+      expect(g.tip_fillet!.radius).toBe(0.12);
+      expect(g.face_radius).toBe(0.03);
+      const root = g.root_fillet!,
+        tip = g.tip_fillet!;
+      expect(Math.hypot(...root.center)).toBeCloseTo(g.root_diameter / 2 + root.radius, 10);
+      expect(Math.hypot(...tip.center)).toBeCloseTo(g.tip_diameter / 2 - tip.radius, 10);
+      for (const f of [root, tip]) {
+        const dx = f.tangent[0] - f.center[0],
+          dy = f.tangent[1] - f.center[1];
+        expect(Math.hypot(dx, dy)).toBeCloseTo(f.radius, 10);
+        const angle = f.t - g.base_half_angle;
+        expect(dx * Math.cos(angle) + dy * Math.sin(angle)).toBeCloseTo(0, 10);
+      }
+      const edges = profileSegments(g);
+      edges.forEach((edge, i) => {
+        const end = segmentPoint(g, edge, 1),
+          start = segmentPoint(g, edges[(i + 1) % edges.length], 0);
+        expect(Math.hypot(end[0] - start[0], end[1] - start[1])).toBeLessThan(1e-7);
+      });
+    }
+  });
+  it.each([
+    { root_radius: 100 },
+    { tip_radius: 100 },
+    { face_radius: 0.2 },
+    { root_radius: 0 },
+    { tip_radius: 0 },
+    { face_radius: 0 },
+    { root_radius: -1 },
+    { tip_radius: NaN },
+    { manual_radii: 0.5 },
+  ])('rejects invalid manual radii without reducing them: %j', (changes) => {
+    expect(() =>
+      calculate({
+        ...defaults,
+        root_fillet: 1,
+        tip_fillet: 1,
+        face_fillet: 1,
+        manual_radii: 1,
+        root_radius: 0.4,
+        tip_radius: 0.12,
+        face_radius: 0.03,
+        ...changes,
+      }),
+    ).toThrow();
+  });
+  it('returns to proposed radii when manual input is unchecked', () => {
+    const result = calculate({
+      ...defaults,
+      root_fillet: 1,
+      tip_fillet: 1,
+      face_fillet: 1,
+      manual_radii: 0,
+      root_radius: 0.4,
+      tip_radius: 0.12,
+      face_radius: 0.03,
+    });
+    for (const g of result.gears) {
+      expect(g.root_fillet!.radius).toBe(0.6);
+      expect(g.tip_fillet!.radius).toBe(0.2);
+      expect(g.face_radius).toBe(0.1);
+    }
+  });
   it('adds tangent tip blends and shortens the active contact length', () => {
     const base = calculate({ ...defaults, root_fillet: 1 }),
       rounded = calculate({ ...defaults, root_fillet: 1, tip_fillet: 1, face_fillet: 1 });

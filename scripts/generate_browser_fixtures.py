@@ -23,6 +23,18 @@ cases = [
     ("circular-root-blends", {"root_fillet": 1}),
     ("tip-and-face-blends", {"root_fillet": 1, "tip_fillet": 1, "face_fillet": 1}),
     (
+        "manual-radii",
+        {
+            "root_fillet": 1,
+            "tip_fillet": 1,
+            "face_fillet": 1,
+            "manual_radii": 1,
+            "root_radius": 0.4,
+            "tip_radius": 0.12,
+            "face_radius": 0.03,
+        },
+    ),
+    (
         "large-rounded-roots",
         {"root_fillet": 1, "teeth1": 80, "teeth2": 120, "bore1": 0, "bore2": 0},
     ),

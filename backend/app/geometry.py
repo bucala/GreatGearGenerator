@@ -83,6 +83,9 @@ def gear(
     head: bool = False,
     face: bool = False,
     width: float = 16,
+    root_radius: float | None = None,
+    tip_radius: float | None = None,
+    face_radius: float | None = None,
 ) -> dict:
     d = m * z
     db = d * cos(alpha)
@@ -118,14 +121,21 @@ def gear(
         "tip_thickness": da * half_tip,
     }
     if rounding:
-        g["root_fillet"] = proposed_fillet(g, m)
+        g["root_fillet"] = proposed_fillet(g, m, root_radius)
     if head:
-        g["tip_fillet"] = proposed_tip_fillet(g, m)
+        g["tip_fillet"] = proposed_tip_fillet(g, m, tip_radius)
         g["tip_thickness"] = -da * atan2(g["tip_fillet"]["tip"][1], g["tip_fillet"]["tip"][0])
     if face:
-        g["face_radius"] = min(
-            0.05 * m, 0.1 * width, 0.5 * g["root_fillet"]["radius"], 0.5 * g["tip_fillet"]["radius"]
-        )
+        limit = min(width / 2, 0.5 * g["root_fillet"]["radius"], 0.5 * g["tip_fillet"]["radius"])
+        if face_radius is not None:
+            if face_radius < m * 1e-5 or face_radius >= width / 2 or face_radius > limit + 1e-10:
+                raise ValueError(
+                    f"R hrán po šírke = {face_radius} mm je príliš veľký pre koleso z = {z}. "
+                    f"Limit je {limit:.6g} mm a rádus musí byť menší než polovica šírky."
+                )
+            g["face_radius"] = face_radius
+        else:
+            g["face_radius"] = min(0.05 * m, 0.1 * width, limit)
     g["outline"] = rounded_outline(g) if rounding or head else outline(g)
     return g
 
@@ -135,6 +145,10 @@ def analyze(p: Design) -> dict:
         raise ValueError("Zaoblenie hrán po šírke podporuje najviac 60 zubov.")
     if p.face_fillet and (not p.root_fillet or not p.tip_fillet):
         raise ValueError("Zaoblenie hrán po šírke vyžaduje prechody päty aj hlavy.")
+    if p.manual_radii:
+        for kind in ("root", "tip", "face"):
+            if getattr(p, f"{kind}_fillet") and getattr(p, f"{kind}_radius") <= 0:
+                raise ValueError("Pre zapnuté zaoblenia zadajte kladné ručné rádiusy v mm.")
     alpha = radians(p.pressure_angle)
     xsum = p.profile1 + p.profile2
     aw = inverse_inv(inv(alpha) + 2 * xsum * tan(alpha) / (p.teeth1 + p.teeth2))
@@ -155,6 +169,9 @@ def analyze(p: Design) -> dict:
             bool(p.tip_fillet),
             bool(p.face_fillet),
             p.width,
+            p.root_radius if p.manual_radii else None,
+            p.tip_radius if p.manual_radii else None,
+            p.face_radius if p.manual_radii else None,
         )
         for z, x, bore in ((p.teeth1, p.profile1, p.bore1), (p.teeth2, p.profile2, p.bore2))
     ]

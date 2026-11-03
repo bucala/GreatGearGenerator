@@ -34,8 +34,13 @@ const fmt = (v: number, digits = 2) =>
   v.toLocaleString('sk-SK', { maximumFractionDigits: digits, minimumFractionDigits: digits });
 
 export function parseDraft(draft: Draft): Design | null {
-  if (Object.values(draft).some((v) => v.trim() === '' || !Number.isFinite(Number(v)))) return null;
-  return Object.fromEntries(Object.entries(draft).map(([k, v]) => [k, Number(v)])) as Design;
+  const active = { ...draft };
+  for (const kind of ['root', 'tip', 'face'] as const)
+    if (draft.manual_radii !== '1' || draft[`${kind}_fillet`] !== '1')
+      active[`${kind}_radius`] = '0';
+  if (Object.values(active).some((v) => v.trim() === '' || !Number.isFinite(Number(v))))
+    return null;
+  return Object.fromEntries(Object.entries(active).map(([k, v]) => [k, Number(v)])) as Design;
 }
 
 class ViewerBoundary extends Component<{ children: ReactNode }, { error: boolean }> {
@@ -65,6 +70,7 @@ function Field({
   draft,
   set,
   slider = false,
+  disabled = false,
 }: {
   name: keyof Design;
   label: string;
@@ -76,6 +82,7 @@ function Field({
   draft: Draft;
   set: (key: keyof Design, value: string) => void;
   slider?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div className="field">
@@ -89,6 +96,7 @@ function Field({
           min={min}
           max={max}
           step={step}
+          disabled={disabled}
           value={draft[name]}
           onChange={(e) => set(name, e.target.value)}
         />
@@ -202,43 +210,44 @@ export default function App() {
           <span className="tiny-dot" /> Engineering workspace{' '}
           <span className="version">v{version}</span>
         </div>
-        <button
-          className="icon-button"
-          onClick={() => setLight(!light)}
-          aria-label={light ? 'Zapnúť tmavú tému' : 'Zapnúť svetlú tému'}
-        >
-          {light ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
-      </header>
-      <div className="page-heading">
-        <div>
-          <div className="eyebrow">
-            NÁVRH PREVODOV <ChevronRight size={12} /> ČELNÉ OZUBENIE
-          </div>
-          <h1>
-            {workflow === 'reverse' ? 'Od merania k ozubeniu' : 'Od parametrov k súkolesiu'}
-            <span>.</span>
-          </h1>
-          <p>
-            {workflow === 'reverse'
-              ? 'Modul nemusíte poznať. Hľadáme ho z rozmerov reálneho kolesa.'
-              : 'Navrhnite, preskúmajte a overte geometriu vášho prevodu.'}
-          </p>
-        </div>
-        {workflow === 'design' && (
+        <div className="topbar-actions">
+          {workflow === 'design' && (
+            <button
+              className="secondary reset"
+              aria-label="Obnoviť návrh"
+              onClick={() => {
+                setDraft(initialDraft);
+                setApproximate(false);
+                setAnimate(false);
+                setIdentifiedModule(null);
+              }}
+            >
+              <RotateCcw size={15} /> <span>Obnoviť návrh</span>
+            </button>
+          )}
           <button
-            className="secondary reset"
-            onClick={() => {
-              setDraft(initialDraft);
-              setApproximate(false);
-              setAnimate(false);
-              setIdentifiedModule(null);
-            }}
+            className="icon-button"
+            onClick={() => setLight(!light)}
+            aria-label={light ? 'Zapnúť tmavú tému' : 'Zapnúť svetlú tému'}
           >
-            <RotateCcw size={15} /> Obnoviť návrh
+            {light ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-        )}
-      </div>
+        </div>
+      </header>
+      {workflow === 'reverse' && (
+        <div className="page-heading">
+          <div>
+            <div className="eyebrow">
+              NÁVRH PREVODOV <ChevronRight size={12} /> ČELNÉ OZUBENIE
+            </div>
+            <h1>
+              Od merania k ozubeniu
+              <span>.</span>
+            </h1>
+            <p>Modul nemusíte poznať. Hľadáme ho z rozmerov reálneho kolesa.</p>
+          </div>
+        </div>
+      )}
       <div className="workflow-tabs mode-tabs" role="group" aria-label="Spôsob návrhu">
         <button
           type="button"
@@ -284,58 +293,7 @@ export default function App() {
               <h2>Parametre návrhu</h2>
               <span className="tag">mm</span>
             </div>
-            <fieldset className="model-selection">
-              <legend>Zaoblenia modelu</legend>
-              <label>
-                <input
-                  type="radio"
-                  name="root-model"
-                  checked={draft.root_fillet === '0'}
-                  onChange={() => set('root_fillet', '0')}
-                />{' '}
-                Bez zaoblenia päty
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="root-model"
-                  checked={draft.root_fillet === '1'}
-                  onChange={() => set('root_fillet', '1')}
-                />{' '}
-                S navrhovaným zaoblením päty
-              </label>
-              <p className="hint">Kruhový prechod v päte, návrh R ≤ 0,3 m.</p>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={draft.tip_fillet === '1'}
-                  onChange={(e) => set('tip_fillet', e.target.checked ? '1' : '0')}
-                />{' '}
-                Zaobliť hlavu zuba
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={draft.face_fillet === '1'}
-                  onChange={(e) => set('face_fillet', e.target.checked ? '1' : '0')}
-                />{' '}
-                Zaobliť hrany po šírke
-              </label>
-              <p className="hint">
-                Hrany po šírke zapnú aj prechody päty a hlavy pre súvislý CAD obrys. 3D náhľad potom
-                počíta CAD jadro; môže trvať dlhšie. Najviac 60 zubov na koleso.
-              </p>
-              {fresh && (
-                <p className="hint">
-                  R₁ = {fmt(result.gears[0].root_fillet?.radius ?? 0, 3)} mm · R₂ ={' '}
-                  {fmt(result.gears[1].root_fillet?.radius ?? 0, 3)} mm
-                  <br />R hlavy:{' '}
-                  {result.gears.map((g) => fmt(g.tip_fillet?.radius ?? 0, 3)).join(' / ')} mm
-                  <br />R hrán po šírke:{' '}
-                  {result.gears.map((g) => fmt(g.face_radius, 3)).join(' / ')} mm
-                </p>
-              )}
-            </fieldset>
+
             <div className="section-label">
               <span>01</span> ZÁKLADNÁ GEOMETRIA
             </div>
@@ -439,6 +397,127 @@ export default function App() {
                 })}
               </div>
             </div>
+            <fieldset className="model-selection">
+              <legend>Zaoblenia modelu</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="root-model"
+                  checked={draft.root_fillet === '0'}
+                  onChange={() => set('root_fillet', '0')}
+                />{' '}
+                Bez zaoblenia päty
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="root-model"
+                  checked={draft.root_fillet === '1'}
+                  onChange={() => set('root_fillet', '1')}
+                />{' '}
+                {draft.manual_radii === '1' ? 'So zaoblením päty' : 'S navrhovaným zaoblením päty'}
+              </label>
+              <p className="hint">
+                {draft.manual_radii === '1'
+                  ? 'Kruhový prechod v päte s ručne zadaným R.'
+                  : 'Kruhový prechod v päte, návrh R ≤ 0,3 m.'}
+              </p>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.tip_fillet === '1'}
+                  onChange={(e) => set('tip_fillet', e.target.checked ? '1' : '0')}
+                />{' '}
+                Zaobliť hlavu zuba
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.face_fillet === '1'}
+                  onChange={(e) => set('face_fillet', e.target.checked ? '1' : '0')}
+                />{' '}
+                Zaobliť hrany po šírke
+              </label>
+              <p className="hint">
+                Hrany po šírke zapnú aj prechody päty a hlavy pre súvislý CAD obrys. 3D náhľad potom
+                počíta CAD jadro; môže trvať dlhšie. Najviac 60 zubov na koleso.
+              </p>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.manual_radii === '1'}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIdentifiedModule(null);
+                    setDraft((d) => {
+                      const seed = (kind: 'root' | 'tip' | 'face', coefficient: number) => {
+                        const saved = d[`${kind}_radius`];
+                        if (Number(saved) > 0) return saved;
+                        const proposed = fresh
+                          ? result.gears
+                              .map((g) =>
+                                kind === 'face'
+                                  ? g.face_radius
+                                  : (g[`${kind}_fillet`]?.radius ?? 0),
+                              )
+                              .filter((r) => r > 0)
+                          : [];
+                        return String(
+                          proposed.length
+                            ? Math.min(...proposed)
+                            : coefficient * (Number(d.module) || 2),
+                        );
+                      };
+                      return {
+                        ...d,
+                        manual_radii: checked ? '1' : '0',
+                        ...(checked
+                          ? {
+                              root_radius: seed('root', 0.3),
+                              tip_radius: seed('tip', 0.1),
+                              face_radius: seed('face', 0.05),
+                            }
+                          : {}),
+                      };
+                    });
+                  }}
+                />{' '}
+                Ručne zadať rádiusy
+              </label>
+              {draft.manual_radii === '1' && (
+                <div className="manual-radii">
+                  <p className="hint">
+                    Hodnoty v mm platia pre obe kolesá a použijú sa pre zapnuté zaoblenia. Neplatný
+                    rádus sa automaticky nezmenší.
+                  </p>
+                  {(['root', 'tip', 'face'] as const).map((kind, index) => (
+                    <Field
+                      key={kind}
+                      name={`${kind}_radius`}
+                      label={['Rádus päty', 'Rádus hlavy', 'Rádus hrán po šírke'][index]}
+                      symbol="R"
+                      unit="mm"
+                      min={0.000001}
+                      max={100}
+                      step={0.01}
+                      draft={draft}
+                      set={set}
+                      disabled={draft[`${kind}_fillet`] !== '1'}
+                    />
+                  ))}
+                </div>
+              )}
+              {fresh && (
+                <p className="hint">
+                  R₁ = {fmt(result.gears[0].root_fillet?.radius ?? 0, 3)} mm · R₂ ={' '}
+                  {fmt(result.gears[1].root_fillet?.radius ?? 0, 3)} mm
+                  <br />R hlavy:{' '}
+                  {result.gears.map((g) => fmt(g.tip_fillet?.radius ?? 0, 3)).join(' / ')} mm
+                  <br />R hrán po šírke:{' '}
+                  {result.gears.map((g) => fmt(g.face_radius, 3)).join(' / ')} mm
+                </p>
+              )}
+            </fieldset>
             <details className="loads">
               <summary>
                 <Activity size={15} /> Zaťaženie a materiál <ChevronRight size={14} />
@@ -724,7 +803,11 @@ export default function App() {
                 onClick={() => exportFile('step')}
               >
                 <Box size={17} />
-                {busy === 'step' ? exportProgress || 'Generujem STEP…' : cadBusy ? 'Počítam 3D zaoblenia…' : 'Stiahnuť STEP'}
+                {busy === 'step'
+                  ? exportProgress || 'Generujem STEP…'
+                  : cadBusy
+                    ? 'Počítam 3D zaoblenia…'
+                    : 'Stiahnuť STEP'}
                 <span>.stp</span>
               </button>
               <button

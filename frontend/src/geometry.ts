@@ -18,6 +18,10 @@ const bounds: Record<keyof Design, [number, number]> = {
   root_fillet: [0, 1],
   tip_fillet: [0, 1],
   face_fillet: [0, 1],
+  manual_radii: [0, 1],
+  root_radius: [0, 100],
+  tip_radius: [0, 100],
+  face_radius: [0, 100],
   module: [0.2, 10],
   teeth1: [8, 120],
   teeth2: [8, 120],
@@ -40,19 +44,27 @@ export function validate(p: Design) {
     throw new Error('Zaoblenie hrán po šírke vyžaduje zapnuté prechody päty aj hlavy.');
   for (const key of Object.keys(bounds) as (keyof Design)[]) {
     const [lo, hi] = bounds[key];
-    const value = key.endsWith('_fillet') ? (p[key] ?? 0) : p[key];
+    const value =
+      key.endsWith('_fillet') || key.endsWith('_radius') || key === 'manual_radii'
+        ? (p[key] ?? 0)
+        : p[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < lo || value > hi) {
       throw new Error(`${key}: zadajte hodnotu od ${lo} do ${hi}.`);
     }
   }
   if (
-    [p.root_fillet, p.tip_fillet, p.face_fillet].some(
+    [p.root_fillet, p.tip_fillet, p.face_fillet, p.manual_radii].some(
       (v) => v !== undefined && !Number.isInteger(v),
     )
   )
     throw new Error('Vyberte model bez zaoblenia alebo s navrhovaným zaoblením.');
   if (!Number.isInteger(p.teeth1) || !Number.isInteger(p.teeth2)) {
     throw new Error('Počet zubov musí byť celé číslo.');
+  }
+  if (p.manual_radii) {
+    for (const kind of ['root', 'tip', 'face'] as const)
+      if (p[`${kind}_fillet`] && !(p[`${kind}_radius`]! > 0))
+        throw new Error('Pre zapnuté zaoblenia zadajte kladné ručné rádiusy v mm.');
   }
 }
 
@@ -111,6 +123,7 @@ function gear(
   head: boolean,
   width: number,
   face: boolean,
+  radii: Design,
 ): Gear {
   const d = m * z,
     db = d * cos(alpha);
@@ -146,18 +159,29 @@ function gear(
     tip_thickness: da * halfTip,
     outline: [],
   };
-  if (round) g.root_fillet = proposeRootFillet(g, m);
+  if (round)
+    g.root_fillet = proposeRootFillet(g, m, radii.manual_radii ? radii.root_radius : undefined);
   if (head) {
-    g.tip_fillet = proposeTipFillet(g, m);
+    g.tip_fillet = proposeTipFillet(g, m, radii.manual_radii ? radii.tip_radius : undefined);
     g.tip_thickness = -da * Math.atan2(g.tip_fillet.tip[1], g.tip_fillet.tip[0]);
   }
-  if (face)
-    g.face_radius = Math.min(
-      0.05 * m,
-      0.1 * width,
-      0.5 * g.root_fillet!.radius,
-      0.5 * g.tip_fillet!.radius,
-    );
+  if (face) {
+    const limit = Math.min(width / 2, 0.5 * g.root_fillet!.radius, 0.5 * g.tip_fillet!.radius);
+    if (radii.manual_radii) {
+      const requested = radii.face_radius!;
+      if (requested < m * 1e-5 || requested >= width / 2 || requested > limit + 1e-10)
+        throw new Error(
+          `R hrán po šírke = ${requested} mm je príliš veľký pre koleso z = ${z}. Limit je ${limit.toLocaleString('sk-SK', { maximumFractionDigits: 6 })} mm a rádus musí byť menší než polovica šírky.`,
+        );
+      g.face_radius = requested;
+    } else
+      g.face_radius = Math.min(
+        0.05 * m,
+        0.1 * width,
+        0.5 * g.root_fillet!.radius,
+        0.5 * g.tip_fillet!.radius,
+      );
+  }
   g.outline = round || head ? roundedOutline(g) : outline(g);
   return g;
 }
@@ -181,6 +205,7 @@ export function calculate(p: Design): Analysis {
     !!p.tip_fillet,
     p.width,
     !!p.face_fillet,
+    p,
   );
   const g2 = gear(
     p.module,
@@ -193,6 +218,7 @@ export function calculate(p: Design): Analysis {
     !!p.tip_fillet,
     p.width,
     !!p.face_fillet,
+    p,
   );
   const gears: [Gear, Gear] = [g1, g2];
   const rb1 = g1.base_diameter / 2,

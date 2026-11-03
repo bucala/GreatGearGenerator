@@ -8,6 +8,10 @@ class Design(BaseModel):
     root_fillet: int = Field(default=0, ge=0, le=1, strict=True)
     tip_fillet: int = Field(default=0, ge=0, le=1, strict=True)
     face_fillet: int = Field(default=0, ge=0, le=1, strict=True)
+    manual_radii: int = Field(default=0, ge=0, le=1, strict=True)
+    root_radius: float = Field(default=0, ge=0, le=100)
+    tip_radius: float = Field(default=0, ge=0, le=100)
+    face_radius: float = Field(default=0, ge=0, le=100)
 
     module: float = Field(default=2, ge=0.2, le=10)
     teeth1: int = Field(default=24, ge=8, le=120, strict=True)

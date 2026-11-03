@@ -49,6 +49,15 @@ describe('browser calculations match the Python engine', () => {
               expect(g.root_fillet?.[key][j]).toBeCloseTo(v, 9),
             );
         } else expect(g.root_fillet).toBeNull();
+        expect(g.face_radius).toBeCloseTo(reference.face_radius, 10);
+        if (reference.tip_fillet) {
+          expect(g.tip_fillet?.radius).toBeCloseTo(reference.tip_fillet.radius, 10);
+          expect(g.tip_fillet?.t).toBeCloseTo(reference.tip_fillet.t, 10);
+          for (const key of ['center', 'tip', 'tangent'] as const)
+            reference.tip_fillet[key].forEach((v, j) =>
+              expect(g.tip_fillet?.[key][j]).toBeCloseTo(v, 10),
+            );
+        } else expect(g.tip_fillet).toBeNull();
         expect(g.outline).toHaveLength(reference.outline_length);
         for (const [index, point] of reference.outline_samples as [number, [number, number]][]) {
           expect(g.outline[index][0]).toBeCloseTo(point[0], 8);

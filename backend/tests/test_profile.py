@@ -7,6 +7,35 @@ from backend.app.models import Design
 from backend.app.profile import segment_point, segments
 
 
+def test_manual_radii_are_exact_and_keep_tangent_closed_profiles():
+    result = analyze(
+        Design(
+            root_fillet=1,
+            tip_fillet=1,
+            face_fillet=1,
+            manual_radii=1,
+            root_radius=0.4,
+            tip_radius=0.12,
+            face_radius=0.03,
+        )
+    )
+    assert result["geometry_ok"]
+    assert isclose(result["effective_width"], 15.94)
+    for g in result["gears"]:
+        assert g["root_fillet"]["radius"] == 0.4
+        assert g["tip_fillet"]["radius"] == 0.12
+        assert g["face_radius"] == 0.03
+        for f in (g["root_fillet"], g["tip_fillet"]):
+            dx, dy = [f["tangent"][i] - f["center"][i] for i in (0, 1)]
+            assert isclose(hypot(dx, dy), f["radius"], abs_tol=1e-10)
+            angle = f["t"] - g["base_half_angle"]
+            assert abs(dx * cos(angle) + dy * sin(angle)) < 1e-10
+        edges = segments(g)
+        for i, edge in enumerate(edges):
+            a, b = segment_point(g, edge, 1), segment_point(g, edges[(i + 1) % len(edges)], 0)
+            assert hypot(a[0] - b[0], a[1] - b[1]) < 1e-7
+
+
 def test_tip_and_face_blends_shorten_contact_and_preserve_reference_circles():
     original = analyze(Design(root_fillet=1))
     result = analyze(Design(root_fillet=1, tip_fillet=1, face_fillet=1))

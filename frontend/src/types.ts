@@ -2,6 +2,10 @@ export type Design = {
   root_fillet?: number;
   tip_fillet?: number;
   face_fillet?: number;
+  manual_radii?: number;
+  root_radius?: number;
+  tip_radius?: number;
+  face_radius?: number;
   module: number;
   teeth1: number;
   teeth2: number;
@@ -20,6 +24,10 @@ export const defaults: Design = {
   root_fillet: 0,
   tip_fillet: 0,
   face_fillet: 0,
+  manual_radii: 0,
+  root_radius: 0,
+  tip_radius: 0,
+  face_radius: 0,
   module: 2,
   teeth1: 24,
   teeth2: 48,

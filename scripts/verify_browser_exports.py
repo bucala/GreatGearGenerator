@@ -19,12 +19,17 @@ for rounding, filename in (
     (0, "gear-pair-approximate.stp"),
     (1, "gear-pair-rounded.stp"),
     (2, "gear-pair-all-blends.stp"),
+    (3, "gear-pair-manual-radii.stp"),
 ):
     result = analyze(
         Design(
             root_fillet=int(rounding > 0),
-            tip_fillet=int(rounding == 2),
-            face_fillet=int(rounding == 2),
+            tip_fillet=int(rounding >= 2),
+            face_fillet=int(rounding >= 2),
+            manual_radii=int(rounding == 3),
+            root_radius=0.4 if rounding == 3 else 0,
+            tip_radius=0.12 if rounding == 3 else 0,
+            face_radius=0.03 if rounding == 3 else 0,
         )
     )
     path = Path("output/samples") / filename
@@ -56,6 +61,15 @@ drawing_text = " ".join(svg.itertext())
 for required in ("KRUHOVÉ ZAOBLENIE PÄTY", "Ø d / Dr = 48", "Ø dᶠ = 43", "R päty = 0,6"):
     assert required in drawing_text, f"SVG missing {required}"
 
+manual_svg = ET.parse("output/drawings/gear-manual-radii.svg").getroot()
+manual_text = " ".join(manual_svg.itertext())
+for required in ("R päty = 0,4", "R hlavy = 0,12", "R šírky = 0,03"):
+    assert required in manual_text, f"Manual SVG missing {required}"
+manual_pdf = PdfReader("output/pdf/gear-manual-radii.pdf")
+manual_report = " ".join(p.extract_text() for p in manual_pdf.pages)
+for required in ("Root radius", "Tip radius", "0.400", "0.120", "0.030"):
+    assert required in manual_report, f"Manual PDF missing {required}"
+
 pdf = PdfReader("output/pdf/gear-report.pdf")
 assert len(pdf.pages) == 1
 text = pdf.pages[0].extract_text()
@@ -70,5 +84,5 @@ for required in (
 ):
     assert required in text, f"PDF missing {required}"
 print(
-    "Browser exports verified: sharp, root-rounded and fully blended STEP solids, bores, volumes, dimensioned SVG and PDF."
+    "Browser exports verified: sharp, root-rounded, fully blended and manual-radius STEP solids, bores, volumes, dimensioned SVG and PDF."
 )

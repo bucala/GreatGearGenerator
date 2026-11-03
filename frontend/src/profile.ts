@@ -10,7 +10,7 @@ export type ProfileSegment =
  * or involute. R=0.3m is a design starting point, not an ISO tool prescription.
  * Store the left blend at tooth angle zero; the right blend is its mirror.
  */
-export function proposeRootFillet(g: Gear, module: number): RootFillet {
+export function proposeRootFillet(g: Gear, module: number, requested?: number): RootFillet {
   const rf = g.root_diameter / 2,
     rb = g.base_diameter / 2;
   function construct(radius: number): RootFillet {
@@ -41,6 +41,14 @@ export function proposeRootFillet(g: Gear, module: number): RootFillet {
       Math.hypot(...f.tangent) < g.tip_diameter / 2
     );
   }
+  if (requested !== undefined) {
+    const f = construct(requested);
+    if (!Number.isFinite(requested) || requested < module * 1e-5 || !fits(f))
+      throw new Error(
+        `R päty = ${requested} mm sa nezmestí do podporovanej geometrie kolesa z = ${g.teeth}. Zadajte menší kladný rádus.`,
+      );
+    return f;
+  }
   let radius = 0.3 * module;
   if (!fits(construct(radius))) {
     let lo = 0,
@@ -65,7 +73,7 @@ const rotate = ([x, y]: Point2, a: number): Point2 => [
 ];
 const mirror = ([x, y]: Point2): Point2 => [x, -y];
 
-export function proposeTipFillet(g: Gear, module: number): TipFillet {
+export function proposeTipFillet(g: Gear, module: number, requested?: number): TipFillet {
   const ra = g.tip_diameter / 2,
     rb = g.base_diameter / 2;
   const start = g.root_fillet?.t ?? g.t_start;
@@ -83,6 +91,14 @@ export function proposeTipFillet(g: Gear, module: number): TipFillet {
   }
   const fits = (f: TipFillet | null) =>
     f !== null && f.tip[1] < -1e-7 * module && f.t > start + 0.35 * (g.t_end - start);
+  if (requested !== undefined) {
+    const f = construct(requested);
+    if (!Number.isFinite(requested) || requested < module * 1e-5 || !fits(f))
+      throw new Error(
+        `R hlavy = ${requested} mm sa nezmestí do podporovanej geometrie kolesa z = ${g.teeth}. Zadajte menší kladný rádus.`,
+      );
+    return f!;
+  }
   let radius = 0.1 * module;
   if (!fits(construct(radius))) {
     let lo = 0,

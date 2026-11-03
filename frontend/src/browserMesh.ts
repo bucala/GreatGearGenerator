@@ -16,6 +16,10 @@ const key = (p: Design) =>
     p.root_fillet ?? 0,
     p.tip_fillet ?? 0,
     p.face_fillet ?? 0,
+    p.manual_radii ?? 0,
+    p.root_radius ?? 0,
+    p.tip_radius ?? 0,
+    p.face_radius ?? 0,
   ]);
 let cached: { key: string; blob: Blob; meshes: [CadMesh, CadMesh] } | null = null;
 export const cachedStep = (design: Design) => (cached?.key === key(design) ? cached.blob : null);
